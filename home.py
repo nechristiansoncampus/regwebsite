@@ -31,8 +31,8 @@ def info():
                 print(row[2], row[3])
                 print(row[7])
                 if (row[4].strip() == ''):
-                    return render_template('not_paid.html')
+                    return render_template('not_paid.html', name=row[2] + ' ' + row[3])
                 break
         print(wks.get_row(i))
         wks.update_value('B' + str(i), True)
-    return render_template('info.html')
+    return render_template('info.html', name=row[2] + ' ' + row[3])
