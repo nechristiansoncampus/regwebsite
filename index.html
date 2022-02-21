@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Spring Retreat 2022</title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+  </head>
+  <body>
+  <pre id="content" style="white-space: pre-wrap;"></pre>
+  <p>Input your name<p>
+  <form action="" method="get">
+    <div>
+      <label for="name">Enter your name: </label>
+      <input type="text" name="name" id="name" required>
+    </div>
+    <div>
+      <label for="email">Enter your email: </label>
+      <input type="email" name="email" id="email" required>
+    </div>
+    <div>
+      <input type="submit" value="Submit">
+    </div>
+  </form>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script>
+  function start() {
+    // 2. Initialize the JavaScript client library.
+    gapi.client.init({
+      'apiKey': 'AIzaSyDuLrOTcPYzD-2dRl0u3hxRub0eHBzsfqs',
+      // clientId and scope are optional if auth is not required.
+      'clientId': '123191277092-8ajnni1ul28iflt419fu5i684100u4ls.apps.googleusercontent.com',
+      'scope': 'profile',
+    }).then(function() {
+      // 3. Initialize and make the API request.
+      return gapi.client.request({
+        'path': 'https://sheets.googleapis.com/v4/spreadsheets/1MwQscN5SDqfTKJipMbnN2bHzCJ_0773vvO_uXIEBBnI',
+        'headers': {'Access-Control-Allow-Origin': '*'},
+      })
+    }).then(function(response) {
+      debugger
+      console.log(response.result);
+    }, function(reason) {
+      debugger
+      console.log('Error: ' + reason.error);
+      console.log('Details: ' + reason.details);
+    });
+  };
+  // 1. Load the JavaScript client library.
+  gapi.load('client', start);
+  </script>
+  <script type="text/javascript">
+    var CLIENT_ID = '123191277092-8ajnni1ul28iflt419fu5i684100u4ls.apps.googleusercontent.com';
+    var API_KEY = 'AIzaSyDuLrOTcPYzD-2dRl0u3hxRub0eHBzsfqs';
+
+    var SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+    /**
+     *  On load, called to load the auth2 library and API client library.
+     */
+    function handleClientLoad() {
+      console.log('hcl');
+      gapi.load('client:auth2', initClient);
+    }
+  </script>
+  </body>
+</html>
