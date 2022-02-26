@@ -15,8 +15,10 @@
           <img id="banner" src="{{ url_for('static', filename='img/banner.png') }}"/>
           <div class="row"><h1>You're checked in!</h1></div>
           <div class="row"><h4>{{name}}</h4></div>
-          <div>Your cabin: </div>
-          <div>Your activity group: </div>
+          <div>Your cabin assignment: {{housing}}</div>
+          <div>Your activity group: {{activity_group}}</div>
+          <a href="{{ url_for('static', filename='img/camp-map.png') }}">Map of camp</a>
+          <div class="footer"><span>Please screenshot this for your records</span></div>
         </div>
       </div>
     </div></div>

@@ -10,3 +10,18 @@
     width: 100%;
     padding-bottom: 10px;
 }
+
+.footer {
+    color: #6c757d;
+    text-align: center;
+    position: absolute;
+    bottom: 0;
+    color: #6c757d;
+    text-align: center;
+    display: inline-block;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    width: 100%;
+    margin-bottom: 15px;
+}
