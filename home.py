@@ -32,3 +32,19 @@ def info():
                     return render_template('info.html', name=row[2] + ' ' + row[3], housing=row[6], activity_group=row[7])
                 break
     return render_template('home.html', error="Phone number not registered")
+
+@app.route("/announcements", methods=['get'])
+def announcements():
+    gc = pygsheets.authorize(service_account_env_var='service_credentials')
+    sh = gc.open('2022 Spring Retreat - Registration & Planning')
+    wks = sh.worksheet_by_title('Announcements')
+
+    announcements = []
+    i = 0
+    for row in wks:
+        if i == 0:
+            i += 1
+            continue
+        announcements.append(row[0])
+        i += 1
+    return render_template('announcements.html', announcements=announcements)
