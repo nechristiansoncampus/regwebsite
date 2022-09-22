@@ -14,15 +14,14 @@ def home():
 @app.route("/info", methods=['post', 'get'])
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
-    sh = gc.open('2022 Spring Retreat - Registration & Planning')
+    sh = gc.open('Retreat Testing Spreadsheet')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
-        user = []
         i = 0
         for row in wks:
             i += 1
-            sheet_pn = re.sub(r"\D", "", row[10])
+            sheet_pn = re.sub(r"\D", "", row[11])
             form_pn = request.form['phone']
             if sheet_pn == form_pn:
                 if (row[4].strip() == ''):
