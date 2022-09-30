@@ -14,7 +14,7 @@ def home():
 @app.route("/info", methods=['post', 'get'])
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
-    sh = gc.open('Retreat Testing Spreadsheet')
+    sh = gc.open('2022 Fall Retreat (Responses & Planning)')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
@@ -32,18 +32,18 @@ def info():
                 break
     return render_template('home.html', error="Phone number not registered")
 
-@app.route("/announcements", methods=['get'])
-def announcements():
-    gc = pygsheets.authorize(service_account_env_var='service_credentials')
-    sh = gc.open('2022 Spring Retreat - Registration & Planning')
-    wks = sh.worksheet_by_title('Announcements')
+# @app.route("/announcements", methods=['get'])
+# def announcements():
+#     gc = pygsheets.authorize(service_account_env_var='service_credentials')
+#     sh = gc.open('2022 Spring Retreat - Registration & Planning')
+#     wks = sh.worksheet_by_title('Announcements')
 
-    announcements = []
-    i = 0
-    for row in wks:
-        if i == 0:
-            i += 1
-            continue
-        announcements.append(row[0])
-        i += 1
-    return render_template('announcements.html', announcements=announcements)
+#     announcements = []
+#     i = 0
+#     for row in wks:
+#         if i == 0:
+#             i += 1
+#             continue
+#         announcements.append(row[0])
+#         i += 1
+#     return render_template('announcements.html', announcements=announcements)
