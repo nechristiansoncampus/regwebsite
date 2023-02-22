@@ -14,7 +14,7 @@ def home():
 @app.route("/info", methods=['post', 'get'])
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
-    sh = gc.open('2022 Fall Retreat (Responses & Planning)')
+    sh = gc.open('2023 Spring Retreat - Responses & Planning')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
