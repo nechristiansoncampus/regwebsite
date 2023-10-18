@@ -1,3 +1,4 @@
-regwebsite-venv
+venv-regwebsite
 .DS_Store
 regwebsite.code-workspace
+credentials

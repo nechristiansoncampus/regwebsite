@@ -32,26 +32,6 @@
                 <input type="tel" class="form-control" name="phone" id="phone" pattern="[0-9]{3}[0-9]{3}[0-9]{4}" placeholder="2025550144" required>
                 <div id="phoneFormat" class="form-text">numbers only, no dashes or parentheses</div>
               </div>
-              <div class="mb-3">
-                <label for="ice-skating" class="form-label">Are you planning on ice skating during activity time today? </label>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="ice-skating" id="yes-ice-skating" value="yes" onchange="updateRequirements(this);" required>
-                  <label class="form-check-label" for="yes-ice-skating">
-                    Yes
-                  </label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="ice-skating" id="no-ice-skating" value="no" onchange="updateRequirements(this);">
-                  <label class="form-check-label" for="no-ice-skating">
-                    Not this time
-                  </label>
-                </div>
-              </div>
-              <div class="mb-3" id="shoe-size-container">
-                <label for="shoe-size" class="form-label">If yes, what's your shoe size? </label>
-                <input type="text" class="form-control" name="shoe-size" id="shoe-size" pattern="^[1-9]$|^0[1-9]$|^1[0-9]$|^20$//^(?:[1-9]|0[1-9]|1[0-9]|20)$">
-                <div id="phoneFormat" class="form-text">no half sizes, only whole numbers</div>
-              </div>
               <button type="submit" class="btn btn-primary">Submit</button>
             </form>
           </div>

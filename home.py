@@ -15,25 +15,21 @@ def home():
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
     # add regwebsite@reg-website-341515.iam.gserviceaccount.com as editor to sheet
-    sh = gc.open('2023 Spring Retreat - Responses & Planning')
+    sh = gc.open('2023 Fall Retreat - Registration & Planning')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
         i = 0
         for row in wks:
             i += 1
-            sheet_pn = re.sub(r"\D", "", row[10])
+            sheet_pn = re.sub(r"\D", "", row[9])
             form_pn = request.form['phone']
             if sheet_pn == form_pn:
-                if (row[4].strip() == ''):
-                    return render_template('not_paid.html', name=row[2] + ' ' + row[3])
+                if (row[5].strip() == ''):
+                    return render_template('not_paid.html', name=row[3] + ' ' + row[4])
                 else:
-                    wks.update_value('B' + str(i), True)
-                    ice_skating = True if request.form['ice-skating'] == 'yes' else False
-                    shoe_size = request.form['shoe-size'] if ice_skating else ''
-                    wks.update_value('U' + str(i), ice_skating)
-                    wks.update_value('V' + str(i), shoe_size)
-                    return render_template('info.html', name=row[2] + ' ' + row[3], activity_group=row[8], ice_skating=ice_skating, shoe_size=shoe_size)
+                    wks.update_value('C' + str(i), True)
+                    return render_template('info.html', name=row[3] + ' ' + row[4], activity_group=row[14])
                 break
     return render_template('home.html', error="Phone number not registered")
 
