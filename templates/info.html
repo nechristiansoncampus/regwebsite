@@ -15,9 +15,9 @@
           <img id="banner" src="{{ url_for('static', filename='img/banner.png') }}"/>
           <div class="row"><h1>You're checked in!</h1></div>
           <div class="row"><h4>{{name}}</h4></div>
-          <!-- <div>Your cabin assignment: {{housing}}</div> -->
+          <div>Your cabin assignment: {{housing}}</div>
           <div>Your group: {{activity_group}}</div>
-          <!-- <a href="{{ url_for('static', filename='img/camp-map.png') }}">Map of camp</a> -->
+          <a href="{{ url_for('static', filename='img/camp-map.png') }}">Map of camp</a>
           <a href="{{ url_for('home') }}"><button class="btn btn-primary" style="margin-top: 10px;">Back to Home</button></a>
           <div class="footer"><span>Please screenshot this for your records</span></div>
         </div>
