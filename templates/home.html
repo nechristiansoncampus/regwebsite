@@ -29,7 +29,7 @@
               </div>
               <div class="mb-3">
                 <label for="phone" class="form-label">Enter your phone number: </label>
-                <input type="tel" class="form-control" name="phone" id="phone" pattern="[0-9]{3}[0-9]{3}[0-9]{4}" placeholder="2025550144" required>
+                <input type="tel" class="form-control" name="phone" id="phone" pattern="^(\+)?(?:[0-9] ?){6,14}[0-9]$" placeholder="2025550144" required>
                 <div id="phoneFormat" class="form-text">numbers only, no dashes or parentheses</div>
               </div>
               <button type="submit" class="btn btn-primary">Submit</button>
