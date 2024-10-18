@@ -29,7 +29,7 @@ def info():
                     return render_template('not_paid.html', name=row[3] + ' ' + row[4])
                 else:
                     wks.update_value('B' + str(i), True)
-                    return render_template('info.html', name=row[3] + ' ' + row[5], activity_group="", housing=row[16])
+                    return render_template('info.html', name=row[3] + ' ' + row[5], group=row[6], housing=row[16])
                 break
     return render_template('home.html', error="Phone number not registered")
 
