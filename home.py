@@ -24,12 +24,13 @@ def info():
             i += 1
             sheet_pn = re.sub(r"\D", "", row[12]) #removes anything that's not a number
             form_pn = request.form['phone']
+            print(sheet_pn, form_pn)
             if sheet_pn == form_pn:
                 if (row[7].strip() == ''):
                     return render_template('not_paid.html', name=row[3] + ' ' + row[4])
                 else:
                     wks.update_value('B' + str(i), True)
-                    return render_template('info.html', name=row[3] + ' ' + row[5], group=row[6], housing=row[16])
+                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[6], housing=row[16])
                 break
     return render_template('home.html', error="Phone number not registered")
 
