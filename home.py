@@ -15,14 +15,14 @@ def home():
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
     # add regwebsite@reg-website-341515.iam.gserviceaccount.com as editor to sheet
-    sh = gc.open('2024 Fall Retreat - Registration Form (Responses)')
+    sh = gc.open('2025 Spring Retreat - Responses & Planning')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
         i = 0
         for row in wks:
             i += 1
-            sheet_pn = re.sub(r"\D", "", row[11]) #removes anything that's not a number
+            sheet_pn = re.sub(r"\D", "", row[10]) #removes anything that's not a number
             form_pn = request.form['phone']
             print(sheet_pn, form_pn)
             if sheet_pn == form_pn:
@@ -30,7 +30,7 @@ def info():
                     return render_template('not_paid.html', name=row[3] + ' ' + row[4])
                 else:
                     wks.update_value('B' + str(i), True)
-                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[15], housing=row[16])
+                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[12], housing=row[13])
                 break
     return render_template('home.html', error="Phone number not registered")
 
