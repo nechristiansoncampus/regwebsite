@@ -15,7 +15,7 @@ def home():
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
     # add regwebsite@reg-website-341515.iam.gserviceaccount.com as editor to sheet
-    sh = gc.open('2025 Spring Retreat - Responses & Planning')
+    sh = gc.open('2025 Fall Retreat - Registration Form (Responses)')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
