@@ -34,6 +34,10 @@ def info():
                 break
     return render_template('home.html', error="Phone number not registered")
 
+@app.route("/retreat", methods=['get'])
+def retreat():
+    return render_template('retreat.html')
+
 # @app.route("/announcements", methods=['get'])
 # def announcements():
 #     gc = pygsheets.authorize(service_account_env_var='service_credentials')

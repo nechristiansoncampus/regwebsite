@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Revelation: A Call to Overcome — Spring Retreat</title>
+  <meta name="description" content="A college Christian spring retreat centered on Revelation: A Call to Overcome." />
+  <meta name="theme-color" content="#f7fbff" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+
+  <style>
+    html, body{
+      width: 100%;
+      overflow-x: clip;   /* better than hidden when supported */
+    }
+
+    @supports not (overflow-x: clip){
+      html, body{ overflow-x: hidden; }
+    }
+
+    main{
+      width: 100%;
+      overflow-x: clip;
+    }
+
+    @supports not (overflow-x: clip){
+      main{ overflow-x: hidden; }
+    }
+
+    .wrap, .heroGrid, .heroCopy, .topbar, .panel, .meta, .metaCard, .titleBlock{
+      min-width: 0;
+    }
+
+    .heroGrid > *{
+      min-width: 0;
+    }
+
+    .blob{
+      max-width: 100%;
+    }
+
+    /* Make sure sections can host a background layer */
+    section{
+      position: relative;
+      overflow: hidden; /* keeps background contained */
+    }
+
+    /* IMG background layer */
+    .sectionBg{
+      position: relative; /* redundant but explicit */
+    }
+
+    /* Background photo layer (REAL image, not CSS background) */
+    .sectionPhoto{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+      object-position: var(--bg-pos, 50% 10%);
+
+      opacity: 0.28;
+      filter: saturate(1.15) contrast(1.08);
+      transform: scale(1.06); /* gives room to reframe faces */
+
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Much lighter wash — just for readability */
+    .sectionBg::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index: 1;
+
+      background: linear-gradient(
+        180deg,
+        rgba(247,251,255,.25),
+        rgba(247,251,255,.45)
+      );
+      pointer-events:none;
+    }
+
+    /* Ensure your real content sits above the background layers */
+    .sectionBg > .wrap{
+      position: relative;
+      z-index: 2;
+    }
+
+    /* If your .panel already has a background, you can soften it a touch so the photo peeks through */
+    .sectionBg .panel{
+      background: rgba(255,255,255,.68); /* tweak as needed */
+    }
+
+
+    /* -------------------------
+       Spring / light theme tokens
+    -------------------------- */
+    :root{
+      --bg0:#f7fbff;
+      --bg1:#f3fbf6;
+      --ink:#0b1220;
+      --muted: rgba(11,18,32,.68);
+      --muted2: rgba(11,18,32,.55);
+
+      --card: rgba(255,255,255,.72);
+      --card2: rgba(255,255,255,.54);
+      --line: rgba(11,18,32,.10);
+
+      /* Spring pastels (still punchy) */
+      --accent1:#7c3aed; /* violet */
+      --accent2:#06b6d4; /* cyan */
+      --accent3:#22c55e; /* green */
+      --accent4:#fb7185; /* rose */
+
+      --radius: 18px;
+      --shadow: 0 18px 50px rgba(11,18,32,.12);
+      --shadow2: 0 10px 28px rgba(11,18,32,.10);
+      --max: 1080px;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height: 100%; }
+    body{
+      margin:0;
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1100px 700px at 50% -10%, rgba(124,58,237,.16), transparent 62%),
+        radial-gradient(900px 620px at 90% 15%, rgba(6,182,212,.14), transparent 60%),
+        radial-gradient(900px 620px at 10% 75%, rgba(34,197,94,.12), transparent 62%),
+        radial-gradient(700px 520px at 70% 90%, rgba(251,113,133,.10), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    a{ color: inherit; text-decoration: none; }
+    button{ font: inherit; }
+
+    /* -------------------------
+       Scroll progress bar (lighter)
+    -------------------------- */
+    .progress{
+      position: fixed;
+      top:0; left:0; right:0;
+      height: 3px;
+      z-index: 80;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3), var(--accent4));
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      opacity: .95;
+    }
+
+    /* -------------------------
+       Layout: scroll-snap sections
+    -------------------------- */
+    main{
+      height: 100svh;
+      overflow-y: auto;
+      scroll-snap-type: y proximity;
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+      scroll-padding-top: 18px;
+      scroll-padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+
+    section{
+      min-height: 100svh;
+      scroll-snap-align: start;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px 16px 22px;
+      padding-bottom: calc(26px + env(safe-area-inset-bottom));
+      position: relative;
+    }
+
+    .wrap{
+      width: min(var(--max), 100%);
+      margin: 0 auto;
+    }
+
+    /* -------------------------
+       Hero
+    -------------------------- */
+    .heroGrid{
+      display:grid;
+      gap: 16px;
+      align-items: stretch;
+      grid-template-columns: 1fr;
+    }
+
+    /* ===== Hero Title System ===== */
+
+    .titleBlock{
+      margin-top: 6px;
+      padding: 10px 2px;
+      border-radius: 18px;
+
+      /* subtle paper-like lift so text pops over gradients/video */
+      background: radial-gradient(
+        700px 160px at 20% 10%,
+        rgba(255,255,255,.72),
+        rgba(255,255,255,0)
+      );
+    }
+
+    .heroTitle{
+      font-family: "Fraunces", serif;
+      margin: 0;
+      letter-spacing: -0.015em;
+      color: rgba(11,18,32,.96);
+    }
+
+    /* Main word: REVELATION */
+    .titleMain{
+      display: block;
+      font-size: clamp(44px, 13vw, 72px);
+      line-height: .92;              /* tight = power */
+      margin: 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      text-shadow:
+        0 1px 0 rgba(255,255,255,.35),
+        0 16px 40px rgba(0,0,0,.20);
+
+      position: relative;
+    }
+
+    /* Subtitle */
+    .titleSub{
+      display: block;
+      font-size: clamp(20px, 5vw, 25px);
+      line-height: 1.05;
+      font-weight: 650;
+      opacity: .92;
+    }
+    /* ===== End Hero Title System ===== */
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,.60);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow2);
+      transform: scale(.98);
+      transform-origin: left top;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(124,58,237,.12), rgba(6,182,212,.10), rgba(34,197,94,.08));
+      border: 1px solid rgba(11,18,32,.10);
+      font-size: 12.5px;
+      color: rgba(11,18,32,.70);
+      letter-spacing: .2px;
+      white-space: nowrap;
+    }
+    .dot{
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: var(--accent3);
+      box-shadow: 0 0 18px rgba(34,197,94,.35);
+    }
+
+    /* Make the topbar a two-row layout */
+    .topbarGrid{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    /* Row 1: title pill fills the width */
+    .badgeRow{
+      width: 100%;
+    }
+    .badgeRow .badge{
+      width: 100%;
+      justify-content: center;   /* center text */
+      white-space: normal;       /* allow wrap if needed */
+    }
+
+    /* Row 2: three equal buttons */
+    .pillRow{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* Ensure pills don't overflow their grid cells */
+    .pillBtn{
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Safety: prevents “poking out” issues when content is wider than container */
+    .topbar, .pillRow{
+      min-width: 0;
+    }
+
+    .pillLinks{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+    .pill{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,18,32,.10);
+      background: rgba(255,255,255,.55);
+      font-size: 12.5px;
+      color: rgba(11,18,32,.66);
+      transition: transform .2s ease, background .2s ease;
+    }
+    .pill:active{ transform: scale(.98); }
+    .pill:hover{ background: rgba(255,255,255,.78); }
+
+    .videoCard{
+      position: relative;
+      border-radius: 22px;
+      overflow:hidden;
+      background: #000;
+      box-shadow: 0 18px 48px rgba(0,0,0,.22);
+    }
+
+    /* On small screens: let the video breathe */
+    @media (max-width: 600px){
+      .videoCard{
+        border-radius: 26px;
+      }
+    }
+
+    /* Reel ratio */
+    .videoCard::before{
+      content:"";
+      display:block;
+      padding-top: 177.78%; /* 9:16 */
+    }
+    .videoCard video{
+      position:absolute;
+      overflow: hidden;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+    }
+
+    /* “Sunlit spring” overlay */
+    .videoOverlay{
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(0,0,0,0.08) 0%,
+          rgba(0,0,0,0.10) 35%,
+          rgba(0,0,0,0.28) 70%,
+          rgba(0,0,0,0.42) 100%
+        );
+      pointer-events:none;
+    }
+
+    /* Sound toggle button */
+    .soundToggle{
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.40);
+      color: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .soundToggle:active{
+      transform: scale(.98);
+    }
+
+    .soundToggle .label{
+      font-size: 12.5px;
+      letter-spacing: .2px;
+    }
+
+    .iconSpeaker{
+      display: block;
+    }
+
+    /* Default = muted */
+    .iconWave{
+      opacity: 0;
+    }
+    .iconMute{
+      opacity: 1;
+    }
+
+    /* When sound is ON */
+    .soundToggle[aria-pressed="true"] .iconWave{
+      opacity: 1;
+    }
+    .soundToggle[aria-pressed="true"] .iconMute{
+      opacity: 0;
+    }
+
+    /* Smooth transitions */
+    .iconWave,
+    .iconMute{
+      transition: opacity .2s ease;
+    }
+
+    .heroCopy{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      padding: 14px 2px 0;
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(30px, 8vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+
+    /* subtle gradient title */
+    .titleGlow{
+      background: linear-gradient(90deg, rgba(11,18,32,.98), rgba(11,18,32,.88), rgba(124,58,237,.95));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 15.5px;
+      line-height: 1.55;
+    }
+
+    .ctaRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .btn{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(11,18,32,.12);
+      background: rgba(255,255,255,.70);
+      color: rgba(11,18,32,.92);
+      box-shadow: var(--shadow2);
+      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      min-width: 150px;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn:hover{ background: rgba(255,255,255,.86); }
+
+    .btnPrimary{
+      border: 1px solid rgba(6,182,212,.26);
+      background: linear-gradient(90deg, rgba(124,58,237,.14), rgba(6,182,212,.14), rgba(34,197,94,.12));
+      box-shadow: 0 16px 40px rgba(6,182,212,.10);
+    }
+    .btnPrimary::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius: 16px;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.40) 35%, transparent 70%);
+      transform: translateX(-60%);
+      opacity: 0;
+      transition: opacity .2s ease;
+      pointer-events:none;
+    }
+    .btnPrimary:hover::after{
+      opacity: 1;
+      animation: shine 1.2s ease;
+    }
+    @keyframes shine{
+      from{ transform: translateX(-60%); }
+      to{ transform: translateX(60%); }
+    }
+
+    .meta{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .metaCard{
+      border-radius: var(--radius);
+      border: 1px solid rgba(11,18,32,.10);
+      background: rgba(255,255,255,.62);
+      padding: 12px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow2);
+    }
+    .metaCard b{
+      display:block;
+      font-size: 12px;
+      letter-spacing:.10em;
+      text-transform: uppercase;
+      color: rgba(11,18,32,.62);
+      margin-bottom: 6px;
+    }
+    .metaCard .value{
+      font-size: 15px;
+      color: rgba(11,18,32,.90);
+      line-height: 1.35;
+    }
+    .metaCard .hint{
+      font-size: 12.5px;
+      color: rgba(11,18,32,.58);
+      margin-top: 2px;
+    }
+
+    .mouse{
+      width: 18px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(11,18,32,.18);
+      position:relative;
+      background: rgba(255,255,255,.45);
+    }
+    .mouse::after{
+      content:"";
+      width: 4px; height: 4px;
+      border-radius: 999px;
+      background: rgba(11,18,32,.55);
+      position:absolute;
+      left: 50%;
+      top: 7px;
+      transform: translateX(-50%);
+      animation: wheel 1.5s infinite ease;
+    }
+    @keyframes wheel{
+      0%{ transform: translateX(-50%) translateY(0); opacity: .9; }
+      70%{ transform: translateX(-50%) translateY(9px); opacity: .25; }
+      100%{ opacity: 0; }
+    }
+
+    /* -------------------------
+       Sections: info panels
+    -------------------------- */
+    .panel{
+      border-radius: calc(var(--radius) + 4px);
+      border: 1px solid rgba(11,18,32,.10);
+      background: rgba(255,255,255,.62);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(11,18,32,.62);
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .kicker .bar{
+      width: 18px; height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+      box-shadow: 0 0 18px rgba(6,182,212,.16);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .list{
+      margin: 10px 0 0;
+      padding: 0;
+      list-style:none;
+      display:grid;
+      gap: 10px;
+    }
+    .list li{
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      color: rgba(11,18,32,.80);
+      line-height: 1.45;
+    }
+    .check{
+      width: 21px; height: 18px;
+      border-radius: 7px;
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, rgba(6,182,212,.18), rgba(34,197,94,.14));
+      border: 1px solid rgba(11,18,32,.10);
+      position:relative;
+      margin-top: 1px;
+      box-shadow: 0 10px 18px rgba(6,182,212,.10);
+    }
+    .check::after{
+      content:"";
+      position:absolute;
+      left: 5px;
+      top: 4px;
+      width: 7px; height: 4px;
+      border-left: 2px solid rgba(11,18,32,.75);
+      border-bottom: 2px solid rgba(11,18,32,.75);
+      transform: rotate(-45deg);
+    }
+
+    /* -------------------------
+       Spring “petal” blobs (subtle)
+    -------------------------- */
+    .blob{
+      position:absolute;
+      width: 360px;
+      height: 360px;
+      border-radius: 44% 56% 50% 50% / 50% 40% 60% 50%;
+      filter: blur(36px);
+      opacity: .22;
+      pointer-events:none;
+      transform: translate3d(0,0,0);
+      animation: float 10s ease-in-out infinite;
+    }
+    .blob.one{
+      top: -90px; left: -160px;
+      background: radial-gradient(circle at 35% 35%, rgba(251,113,133,.55), transparent 62%);
+      animation-delay: -1.2s;
+    }
+    .blob.two{
+      bottom: -140px; right: -170px;
+      background: radial-gradient(circle at 40% 40%, rgba(6,182,212,.52), transparent 62%);
+      animation-delay: -4.6s;
+    }
+    @keyframes float{
+      0%,100%{ transform: translate3d(0,0,0) rotate(0deg) scale(1); }
+      50%{ transform: translate3d(18px,-16px,0) rotate(6deg) scale(1.04); }
+    }
+
+    /* -------------------------
+       Reveal-on-scroll
+    -------------------------- */
+    .reveal{
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .7s ease, transform .7s ease;
+      will-change: opacity, transform;
+    }
+    .reveal.in{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* -------------------------
+       Desktop enhancements
+    -------------------------- */
+    @media (min-width: 860px){
+      section{ padding: 28px 20px; }
+      .heroGrid{
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 22px;
+        align-items: center;
+      }
+      .heroCopy{ padding: 0; }
+      .meta{ grid-template-columns: 1fr 1fr; }
+      .grid2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    /* -------------------------
+       Reduced motion
+    -------------------------- */
+    @media (prefers-reduced-motion: reduce){
+      main{ scroll-behavior: auto; }
+      .blob, .mouse::after{ animation: none !important; }
+      .reveal{ transition: none; transform: none; opacity: 1; }
+      .btnPrimary:hover::after{ animation: none; }
+    }
+
+    /* Title + intro */
+    .scheduleTitle{
+      margin: 4px 0 8px;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+    }
+    .scheduleIntro{
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Meta chips */
+    .scheduleMeta{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 6px 0 16px;
+    }
+    .metaChip{
+      font-size: 12.5px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(17,24,39,.10);
+      background: rgba(255,255,255,.54);
+      color: rgba(17,24,39,.80);
+    }
+
+    /* Day cards layout */
+    .dayGrid{
+      display: grid;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    /* Two columns on wider screens */
+    @media (min-width: 860px){
+      .dayGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    /* Day card */
+    .dayCard{
+      border-radius: 22px;
+      border: 1px solid rgba(17,24,39,.10);
+      background: rgba(255,255,255,.58);
+      overflow: hidden;
+      min-height: 220px; /* adds vertical presence */
+    }
+
+    /* Top band */
+    .dayTop{
+      padding: 14px 14px 12px;
+      background: linear-gradient(
+        180deg,
+        rgba(124,58,237,.14),
+        rgba(6,182,212,.08),
+        rgba(255,255,255,0)
+      );
+    }
+    .dayName{
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: rgba(11,18,32,.92);
+    }
+    .dayHint{
+      font-size: 13.5px;
+      color: rgba(17,24,39,.68);
+      line-height: 1.35;
+    }
+
+    /* Timeline list */
+    .dayTimeline{
+      /* One source of truth for alignment */
+      --dot-col: 22px;      /* width of the dot/rail column */
+      --rail: 2px;          /* rail thickness */
+      --dot: 7px;          /* dot size */
+
+      list-style: none;
+      margin: 0;
+      padding: 14px 14px 16px;
+      display: grid;
+      gap: 12px;
+      position: relative;
+    }
+
+    /* The rail: centered in the dot column, always */
+    .dayTimeline::before{
+      content:"";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+
+      /* center of dot column */
+      left: 25px;
+      transform: translateX(-50%);
+
+      width: var(--rail);
+      border-radius: 999px;
+
+      background: linear-gradient(
+        180deg,
+        rgba(124,58,237,.35),
+        rgba(6,182,212,.22),
+        rgba(34,197,94,.18)
+      );
+      opacity: .65;
+
+      mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+      -webkit-mask-image: linear-gradient(180deg, transparent, #000 12%, #000 88%, transparent);
+    }
+
+    /* Each row: dot column + text column */
+    .dayTimeline li{
+      display: grid;
+      grid-template-columns: var(--dot-col) minmax(0,1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    /* Dot: centered in the dot column, sits on top of the rail */
+    .dayTimeline .dot{
+      width: var(--dot);
+      height: var(--dot);
+      border-radius: 999px;
+      margin: 9px auto 0;       /* centers dot horizontally */
+      z-index: 1;
+
+      background: rgba(124,58,237,.62);
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,.70),
+        0 10px 18px rgba(124,58,237,.16);
+    }
+
+    /* Text */
+    .dayTimeline .txt{
+      font-size: 15px;
+      line-height: 1.5;
+      color: rgba(17,24,39,.86);
+    }
+
+    /* Footer note */
+    .scheduleFoot{
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(17,24,39,.14);
+      font-size: 13.5px;
+      color: var(--muted);
+      opacity: .95;
+    }
+
+    .footTitle{
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-size: 11.5px;
+      margin-bottom: 6px;
+      opacity: .75;
+    }
+
+    .footList{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      line-height: 1.5;
+    }
+
+    .footList span{
+      white-space: nowrap;
+    }
+
+    .floatingRegister{
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+
+      padding: 12px 16px;
+      border-radius: 999px;
+
+      border: 1px solid rgba(17,24,39,.12);
+
+      /* SAME text treatment */
+      color: rgba(17,24,39,.92);
+      font-weight: 800;
+      letter-spacing: -.01em;
+      text-decoration: none;
+
+      transition:
+        opacity .25s ease,
+        transform .25s ease,
+        box-shadow .25s ease;
+    }
+
+    /* visible state */
+    .floatingRegister.isOn{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* press feedback – same as other pills */
+    .floatingRegister:active{
+      transform: translateX(-50%) translateY(1px) scale(.99);
+      box-shadow:
+        0 6px 18px rgba(15,23,42,.14),
+        0 1px 0 rgba(255,255,255,.6) inset;
+    }
+
+    /* icon – identical treatment */
+    .frIcon{
+      display: inline-flex;
+      opacity: .75;
+    }
+
+  </style>
+  <script>
+    const heroVideo = document.getElementById('heroVideo');
+    const soundToggle = document.querySelector('.soundToggle');
+  </script>
+</head>
+
+<body>
+  <div class="progress" aria-hidden="true"></div>
+
+  <main id="scroller">
+    <!-- HERO -->
+    <section id="top">
+      <div class="blob one" aria-hidden="true"></div>
+      <div class="blob two" aria-hidden="true"></div>
+
+      <div class="wrap heroGrid">
+        <div class="videoCard reveal">
+            <video
+              id="heroVideo"
+              src="{{ url_for('static', filename='img/SR2025_Reel.mp4') }}"
+              poster="poster.jpg"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            ></video>
+            <button id="soundToggle" class="soundToggle" type="button" aria-pressed="false" aria-label="Turn sound on">
+              <span class="icon" aria-hidden="true">
+                <svg
+                  class="iconSpeaker"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <!-- speaker body -->
+                  <path d="M11 5L6 9H3v6h3l5 4z" />
+                  <!-- muted slash (hidden when sound on) -->
+                  <line class="iconMute" x1="22" y1="2" x2="2" y2="22" />
+                  <!-- sound waves (hidden when muted) -->
+                  <path class="iconWave" d="M15.5 8.5a4 4 0 010 7" />
+                  <path class="iconWave" d="M18.5 5.5a8 8 0 010 13" />
+                </svg>
+              </span>
+              <span class="label">Sound</span>
+            </button>
+            <div class="videoOverlay"></div>
+        </div>
+
+        <div class="heroCopy">
+          <span style="font-size: small;">Christians on Campus Spring Retreat</span>
+          <h1 class="reveal heroTitle">
+            <span class="titleMain">Revelation</span>
+            <span class="titleSub">A Call to Overcome</span>
+          </h1>
+          <p class="subtitle reveal">
+            A weekend of singing, praising, and seeing Christ in the book of Revelation.
+          </p>
+
+          <div class="ctaRow reveal">
+            <a class="btn btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A" aria-label="Register now">
+              Register
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="btn" href="#details" aria-label="Learn more">
+              Learn more
+            </a>
+          </div>
+
+          <div class="meta">
+            <div class="metaCard reveal">
+              <div>
+                <b>When</b>
+                <div class="value">Feb 21–22</div>
+                <div class="hint">Saturday morning → Sun afternoon</div>
+              </div>
+              <div aria-hidden="true">🗓️</div>
+            </div>
+            <div class="metaCard reveal">
+              <div>
+                <b>Where</b>
+                <div class="value">Camp Incarnation</div>
+                <div class="hint">~2 hours from Boston</div>
+              </div>
+              <div aria-hidden="true">📍</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DETAILS -->
+    <section id="details" class="sectionBg" style="--bg-pos: 50% 0%;">
+      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-details.jpg') }}" alt="" aria-hidden="true" />
+      <div class="wrap panel reveal">
+        <div class="kicker"><span class="bar"></span> What to expect</div>
+        <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Time alone with Jesus. Revelation from the word of God. Companionships in Christ.</h2>
+        <p style="margin:0; color: var(--muted); line-height:1.6;">
+          We'll open the Word, sing, pray, and fellowship together, giving the Lord the opportunity to speak to us.
+          Feel free to bring a friend!
+        </p>
+
+        <div class="grid2">
+          <div>
+            <ul class="list">
+              <li><span class="check"></span><span><b>Messages from the Bible</b> that help you experience and enjoy Christ.</span></li>
+              <li><span class="check"></span><span><b>Singing</b> to turn our hearts to the Lord Jesus.</span></li>
+              <li><span class="check"></span><span><b>Small groups</b> for open conversation and encouragement.</span></li>
+              <li><span class="check"></span><span><b>Rest + fun</b>: games, snow, and snacks.</span></li>
+              <li><span class="check"></span><span><b>Jesus time</b>: personal prayer and time alone with the Lord.</span></li>
+              <li><span class="check"></span><span><b>Practical support</b>: rides, scholarships, and first-time-friendly vibes.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section id="schedule" class="sectionBg" style="--bg-pos: 50% 18%;">
+      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-schedule.jpg') }}" alt="" aria-hidden="true">
+
+      <div class="wrap panel reveal schedulePanel">
+        <div class="kicker"><span class="bar"></span> Schedule</div>
+
+        <h2 class="scheduleTitle">Simple Schedule. Awesome Weekend.</h2>
+
+        <p class="scheduleIntro">
+          Packed with the word, personal prayer, group fellowship, and free time.
+        </p>
+
+        <div class="scheduleMeta">
+          <span class="metaChip">Feb 21–22</span>
+          <span class="metaChip">Sat morning → Sun afternoon</span>
+        </div>
+
+        <div class="dayGrid">
+          <!-- Saturday -->
+          <div class="dayCard">
+            <div class="dayTop">
+              <div class="dayName">Saturday</div>
+              <div class="dayHint">Arrival • Word • Rest • Fellowship</div>
+            </div>
+
+            <ol class="dayTimeline">
+              <li><span class="dot"></span><span class="txt">Arrival and settling in</span></li>
+              <li><span class="dot"></span><span class="txt">Jesus time and messages from the Word</span></li>
+              <li><span class="dot"></span><span class="txt">Meals, rest, and free time together</span></li>
+              <li><span class="dot"></span><span class="txt">Group times and fellowship</span></li>
+            </ol>
+          </div>
+
+          <!-- Sunday -->
+          <div class="dayCard">
+            <div class="dayTop">
+              <div class="dayName">Sunday</div>
+              <div class="dayHint">Final word • Overflow • Departure</div>
+            </div>
+
+            <ol class="dayTimeline">
+              <li><span class="dot"></span><span class="txt">Jesus time and last message</span></li>
+              <li><span class="dot"></span><span class="txt">Fellowship and sharing</span></li>
+              <li><span class="dot"></span><span class="txt">Clean up and photos</span></li>
+              <li><span class="dot"></span><span class="txt">Drive home</span></li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="scheduleFoot">
+          <div class="footTitle">What to bring</div>
+          <div class="footList">
+            <span>📖 Bible </span>
+            <span>🧥 Warm clothes </span>
+            <span>🪥 Toiletries </span>
+            <span>🖊️ Pen or pencil </span>
+            <span>🛌 Bedding or sleeping bag </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="register" class="sectionBg" style="--bg-pos: 50% 0%;">
+      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-register.jpg') }}" alt="" aria-hidden="true" />
+      <div class="wrap panel reveal">
+        <div class="kicker"><span class="bar"></span> Register</div>
+        <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Sign up now!</h2>
+        <p style="margin:0 0 14px; color: var(--muted); line-height:1.6;">
+          Registration includes lodging + meals. Scholarships available—don’t let cost stop you. Deadline is 2/15.
+        </p>
+
+        <div class="ctaRow" style="margin: 0;">
+          <a class="btn btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A">Register here</a>
+          <a class="btn" href="mailto:nechristiansoncampus@gmail.com">Ask a question</a>
+        </div>
+
+        <div style="height: 14px;"></div>
+
+        <div class="metaCard" style="margin:0;">
+          <div>
+            <b>Contact</b>
+            <div class="value">nechristiansoncampus@gmail.com</div>
+            <div class="hint">Rides? Scholarship? We got you.</div>
+          </div>
+          <div aria-hidden="true">💬</div>
+        </div>
+      </div>
+    </section>
+
+    <a id="floatingRegister" class="floatingRegister btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A" aria-label="Register">
+      Register
+      <span class="frIcon" aria-hidden="true">
+        <!-- simple arrow svg -->
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+          <path d="M5 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </a>
+  </main>
+
+<script>
+  // Scroll progress bar + subtle scroll-reactive motion on the reel card
+  const scroller = document.getElementById('scroller');
+  const progress = document.querySelector('.progress');
+
+  function onScroll(){
+    const max = scroller.scrollHeight - scroller.clientHeight;
+    const y = scroller.scrollTop;
+    const p = max > 0 ? y / max : 0;
+
+    if (progress) {
+      progress.style.transform = `scaleX(${p})`;
+    }
+  }
+
+  scroller.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Reveal-on-scroll
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    for(const e of entries){
+      if(e.isIntersecting) e.target.classList.add('in');
+    }
+  }, { root: scroller, threshold: 0.12 });
+
+  revealEls.forEach(el => io.observe(el));
+
+  // If Instagram embeds are present, ask Instagram to (re)scan once everything is loaded
+  window.addEventListener("load", () => {
+    if (window.instgrm && instgrm.Embeds && instgrm.Embeds.process) {
+      instgrm.Embeds.process();
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const heroVideo = document.getElementById('heroVideo');
+    const soundToggle = document.getElementById('soundToggle');
+
+    if (!heroVideo || !soundToggle) {
+      console.warn('Sound toggle init: missing heroVideo or soundToggle', { heroVideo, soundToggle });
+      return;
+    }
+
+    const icon = soundToggle.querySelector('.icon');
+
+    function setSoundUI(isOn){
+      soundToggle.setAttribute('aria-pressed', String(isOn));
+      soundToggle.setAttribute('aria-label', isOn ? 'Turn sound off' : 'Turn sound on');
+    }
+
+    // Start muted for autoplay
+    heroVideo.muted = true;
+    heroVideo.setAttribute('muted', '');
+    setSoundUI(false);
+
+    soundToggle.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        const turningOn = heroVideo.muted;
+
+        if (turningOn) {
+          // Unmute inside the tap gesture
+          heroVideo.muted = false;
+          heroVideo.removeAttribute('muted');
+          heroVideo.volume = 1;
+
+          // Some browsers require play() after unmuting
+          await heroVideo.play();
+
+          setSoundUI(true);
+        } else {
+          heroVideo.muted = true;
+          heroVideo.setAttribute('muted', '');
+          setSoundUI(false);
+        }
+      } catch (err) {
+        // Revert if blocked
+        heroVideo.muted = true;
+        heroVideo.setAttribute('muted', '');
+        setSoundUI(false);
+        console.warn('Sound toggle blocked:', err);
+      }
+    });
+  });
+
+  (() => {
+    const fab = document.getElementById('floatingRegister');
+    const scroller = document.getElementById('scroller');
+    const sections = ['top','details','schedule','register']
+      .map(id => document.getElementById(id));
+
+    if(!fab || !scroller || sections.some(x => !x)) return;
+
+    const state = {
+      top: false,
+      details: false,
+      schedule: false,
+      register: false
+    };
+
+    const update = () => {
+      const show =
+        (state.details || state.schedule) &&
+        !(state.top || state.register);
+
+      fab.classList.toggle('isOn', show);
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        state[e.target.id] = e.isIntersecting;
+      });
+      update();
+    }, {
+      root: scroller,
+      threshold: 0.45
+    });
+
+    sections.forEach(el => io.observe(el));
+    update();
+  })();
+
+</script>
+</body>
+</html>
