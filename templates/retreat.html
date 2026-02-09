@@ -949,6 +949,87 @@
       opacity: .75;
     }
 
+    /* SECOND REEL */
+    #reel-2 {
+      padding: 10px 0 26px;
+    }
+
+    .reel-2-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    .reel-2-card {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.55);
+      box-shadow: var(--shadow);
+      margin-top: 4px;
+      transform: translateY(2px);
+    }
+
+    .reel-2-video {
+      width: 100%;
+      aspect-ratio: 9/16;
+      object-fit: cover;
+      display: block;
+      background: #e8eefc;
+    }
+
+    .reel-2-section {
+      text-align: center;
+    }
+
+    #reel-2 {
+      padding: 6px 0 26px;
+    }
+
+    .section-heading {
+      position: relative;
+      display: inline-block;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      margin: 0 auto 16px;
+      max-width: 320px;
+      line-height: 1.25;
+    }
+
+    /* soft spring accent underline */
+    .section-heading::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: -10px;
+      width: 48px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(34,197,94,.45),
+        rgba(56,189,248,.45),
+        rgba(167,139,250,.45)
+      );
+    }
+
+    @media (min-width: 700px){
+      .reel-2-section {
+        text-align: left;
+      }
+      
+      .section-heading {
+        display: none;
+      }
+
+      .section-heading::after {
+        display: none;
+      }
+    }
+
   </style>
   <script>
     const heroVideo = document.getElementById('heroVideo');
@@ -1070,6 +1151,53 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- SECOND REEL / IG STYLE VIDEO -->
+    <section id="reel-2">
+    <div class="container reel-2-section reveal">
+      <h2 class="section-heading">
+        What people are saying about spring retreat
+      </h2>
+      <div class="reel-2-wrap">
+        <div class="reel-2-card reveal parallax" data-parallax="0.16">
+          <video
+              id="reel2"
+              class="reel-2-video"
+              src="{{ url_for('static', filename='img/Video-425.mp4') }}"
+              poster="reel-2-poster.jpg"
+              autoplay
+              muted
+              loop
+              playsinline
+          ></video>
+          <button id="soundToggle2" class="soundToggle" type="button" aria-pressed="false" aria-label="Turn sound on">
+              <span class="icon" aria-hidden="true">
+              <svg
+                  class="iconSpeaker"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+              >
+                  <!-- speaker body -->
+                  <path d="M11 5L6 9H3v6h3l5 4z" />
+                  <!-- muted slash (hidden when sound on) -->
+                  <line class="iconMute" x1="22" y1="2" x2="2" y2="22" />
+                  <!-- sound waves (hidden when muted) -->
+                  <path class="iconWave" d="M15.5 8.5a4 4 0 010 7" />
+                  <path class="iconWave" d="M18.5 5.5a8 8 0 010 13" />
+              </svg>
+              </span>
+              <span class="label">Sound</span>
+          </button>
+        </div>
+      </div>
+    </div>
     </section>
 
     <!-- SCHEDULE -->
@@ -1203,64 +1331,60 @@
 
   revealEls.forEach(el => io.observe(el));
 
-  // If Instagram embeds are present, ask Instagram to (re)scan once everything is loaded
-  window.addEventListener("load", () => {
-    if (window.instgrm && instgrm.Embeds && instgrm.Embeds.process) {
-      instgrm.Embeds.process();
-    }
-  });
-
   document.addEventListener('DOMContentLoaded', () => {
-    const heroVideo = document.getElementById('heroVideo');
-    const soundToggle = document.getElementById('soundToggle');
 
-    if (!heroVideo || !soundToggle) {
-      console.warn('Sound toggle init: missing heroVideo or soundToggle', { heroVideo, soundToggle });
-      return;
-    }
+    function initSoundToggle(videoId, toggleId) {
+      const video = document.getElementById(videoId);
+      const toggle = document.getElementById(toggleId);
 
-    const icon = soundToggle.querySelector('.icon');
-
-    function setSoundUI(isOn){
-      soundToggle.setAttribute('aria-pressed', String(isOn));
-      soundToggle.setAttribute('aria-label', isOn ? 'Turn sound off' : 'Turn sound on');
-    }
-
-    // Start muted for autoplay
-    heroVideo.muted = true;
-    heroVideo.setAttribute('muted', '');
-    setSoundUI(false);
-
-    soundToggle.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      try {
-        const turningOn = heroVideo.muted;
-
-        if (turningOn) {
-          // Unmute inside the tap gesture
-          heroVideo.muted = false;
-          heroVideo.removeAttribute('muted');
-          heroVideo.volume = 1;
-
-          // Some browsers require play() after unmuting
-          await heroVideo.play();
-
-          setSoundUI(true);
-        } else {
-          heroVideo.muted = true;
-          heroVideo.setAttribute('muted', '');
-          setSoundUI(false);
-        }
-      } catch (err) {
-        // Revert if blocked
-        heroVideo.muted = true;
-        heroVideo.setAttribute('muted', '');
-        setSoundUI(false);
-        console.warn('Sound toggle blocked:', err);
+      if (!video || !toggle) {
+        console.warn('Sound toggle init missing:', { videoId, toggleId });
+        return;
       }
-    });
+
+      function setSoundUI(isOn){
+        toggle.setAttribute('aria-pressed', String(isOn));
+        toggle.setAttribute('aria-label', isOn ? 'Turn sound off' : 'Turn sound on');
+      }
+
+      // Start muted for autoplay
+      video.muted = true;
+      video.setAttribute('muted', '');
+      setSoundUI(false);
+
+      toggle.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+          const turningOn = video.muted;
+
+          if (turningOn) {
+            video.muted = false;
+            video.removeAttribute('muted');
+            video.volume = 1;
+
+            await video.play(); // needed on iOS/Safari
+
+            setSoundUI(true);
+          } else {
+            video.muted = true;
+            video.setAttribute('muted', '');
+            setSoundUI(false);
+          }
+        } catch (err) {
+          video.muted = true;
+          video.setAttribute('muted', '');
+          setSoundUI(false);
+          console.warn('Sound toggle blocked:', err);
+        }
+      });
+    }
+
+    // Initialize both reels
+    initSoundToggle('heroVideo', 'soundToggle');
+    initSoundToggle('reel2', 'soundToggle2');
+
   });
 
   (() => {
