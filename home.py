@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 @app.route("/", methods=['post', 'get'])
 def home():
-    return render_template('home.html')
+    return render_template('retreat.html')
 
 @app.route("/info", methods=['post', 'get'])
 def info():
