@@ -15,7 +15,7 @@ def home():
 def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
     # add regwebsite@reg-website-341515.iam.gserviceaccount.com as editor to sheet
-    sh = gc.open('2025 Fall Retreat - Registration Form (Responses)')
+    sh = gc.open('2026 Spring Retreat - Responses & Planning')
     wks = sh.worksheet_by_title('Responses')
 
     if request.method == 'POST':
@@ -30,13 +30,13 @@ def info():
                     return render_template('not_paid.html', name=row[3] + ' ' + row[4])
                 else:
                     wks.update_value('B' + str(i), True)
-                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[11], housing=row[12])
+                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[13], housing=row[14])
                 break
     return render_template('home.html', error="Phone number not registered")
 
-@app.route("/retreat", methods=['get'])
+@app.route("/check-in", methods=['get'])
 def retreat():
-    return render_template('retreat.html')
+    return render_template('home.html')
 
 # @app.route("/announcements", methods=['get'])
 # def announcements():
