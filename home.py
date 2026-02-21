@@ -22,7 +22,7 @@ def info():
         i = 0
         for row in wks:
             i += 1
-            sheet_pn = re.sub(r"\D", "", row[10]) #removes anything that's not a number
+            sheet_pn = re.sub(r"\D", "", row[11]) #removes anything that's not a number
             form_pn = request.form['phone']
             print(sheet_pn, form_pn)
             if sheet_pn == form_pn:
