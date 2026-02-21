@@ -35,8 +35,8 @@ def info():
     return render_template('home.html', error="Phone number not registered")
 
 @app.route("/check-in", methods=['get'])
-def retreat():
-    return render_template('home.html')
+def check_in():
+    return render_template('check_in.html')
 
 # @app.route("/announcements", methods=['get'])
 # def announcements():
