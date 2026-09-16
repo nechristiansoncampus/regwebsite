@@ -128,6 +128,9 @@
       {% if registration.car_capacity %}
         <div class="row"><span>Car capacity</span><span>{{ registration.car_capacity }}</span></div>
       {% endif %}
+      {% if late_fee and late_fee != '0.00' %}
+        <div class="row"><span>Late fee</span><span>${{ late_fee }}</span></div>
+      {% endif %}
       {% if registration.attended_before == 'no' %}
         <div class="row"><span>First-time discount</span><span>50% off</span></div>
       {% endif %}
