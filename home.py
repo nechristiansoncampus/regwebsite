@@ -170,7 +170,6 @@ def capture_paypal_order(order_id):
     except PayPalError as error:
         return jsonify({'error': str(error)}), 500
 
-    session['payment'] = capture
     capture_details = (
         capture.get('purchase_units', [{}])[0]
         .get('payments', {})

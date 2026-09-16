@@ -344,6 +344,8 @@ class PayPalTests(unittest.TestCase):
         response = self.client.post('/api/paypal/orders/ORDER-1/capture')
 
         self.assertEqual(response.status_code, 200)
+        with self.client.session_transaction() as session:
+            self.assertNotIn('payment', session)
         update_payment.assert_called_once_with(
             'registration-123',
             **{
