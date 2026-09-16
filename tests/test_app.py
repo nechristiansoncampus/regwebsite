@@ -283,10 +283,12 @@ class PayPalTests(unittest.TestCase):
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
         self.client = home.app.test_client()
 
-    def set_registration_session(self, registration=None):
+    def set_registration_session(self, registration=None, paypal_order_id=None):
         with self.client.session_transaction() as session:
             session['registration'] = registration or registration_data()
             session['registration_token'] = 'registration-123'
+            if paypal_order_id:
+                session['paypal_order_id'] = paypal_order_id
 
     def test_order_requires_registration(self):
         response = self.client.post('/api/paypal/orders')
@@ -311,6 +313,8 @@ class PayPalTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         create_order.assert_called_once_with('62.50', 'registration-123')
+        with self.client.session_transaction() as session:
+            self.assertEqual(session['paypal_order_id'], 'ORDER-1')
         update_payment.assert_called_once_with(
             'registration-123',
             **{
@@ -335,7 +339,7 @@ class PayPalTests(unittest.TestCase):
             }],
         }
         capture_order.return_value = capture
-        self.set_registration_session()
+        self.set_registration_session(paypal_order_id='ORDER-1')
 
         response = self.client.post('/api/paypal/orders/ORDER-1/capture')
 
@@ -349,6 +353,29 @@ class PayPalTests(unittest.TestCase):
                 'Paid At': '2026-09-16T12:00:00Z',
             },
         )
+
+    @patch.object(home, 'capture_order')
+    def test_capture_rejects_order_from_another_registration(self, capture_order):
+        self.set_registration_session(paypal_order_id='EXPECTED-ORDER')
+
+        response = self.client.post('/api/paypal/orders/OTHER-ORDER/capture')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('does not match', response.get_json()['error'])
+        capture_order.assert_not_called()
+
+    @patch.object(home, 'capture_order')
+    def test_payment_exempt_registration_cannot_capture_order(self, capture_order):
+        self.set_registration_session(
+            registration_data(campus='CCSU'),
+            paypal_order_id='ORDER-1',
+        )
+
+        response = self.client.post('/api/paypal/orders/ORDER-1/capture')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Payment is not required', response.get_json()['error'])
+        capture_order.assert_not_called()
 
 
 class PayPalServiceTests(unittest.TestCase):

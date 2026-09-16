@@ -139,6 +139,7 @@ def create_paypal_order():
     except PayPalError as error:
         return jsonify({'error': str(error)}), 500
 
+    session['paypal_order_id'] = order.get('id')
     try:
         update_registration_payment(
             session.get('registration_token'),
@@ -157,6 +158,12 @@ def capture_paypal_order(order_id):
     registration = session.get('registration')
     if not registration:
         return jsonify({'error': 'Registration is required before checkout.'}), 400
+
+    if payment_not_required(registration):
+        return jsonify({'error': 'Payment is not required for this registration.'}), 400
+
+    if not session.get('paypal_order_id') or order_id != session.get('paypal_order_id'):
+        return jsonify({'error': 'PayPal order does not match this registration.'}), 400
 
     try:
         capture = capture_order(order_id)
