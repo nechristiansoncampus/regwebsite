@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register for Retreat</title>
+  <style>
+    :root{
+      --bg:#fff7ed;
+      --panel:#fffdf8;
+      --ink:#24160b;
+      --muted:rgba(36,22,11,.64);
+      --line:rgba(92,45,11,.16);
+      --accent:#b45309;
+      --accent2:#15803d;
+      --danger:#991b1b;
+      --shadow:0 24px 70px rgba(92,45,11,.16);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      min-height:100svh;
+      margin:0;
+      padding:24px;
+      color:var(--ink);
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(900px 560px at 15% 0%, rgba(245,158,11,.28), transparent 62%),
+        radial-gradient(760px 480px at 95% 95%, rgba(21,128,61,.15), transparent 62%),
+        linear-gradient(180deg, #fff7ed, #fef3c7 52%, #ecfdf5);
+    }
+
+    .shell{
+      width:min(900px, 100%);
+      margin:0 auto;
+      display:grid;
+      gap:18px;
+    }
+
+    .masthead{ padding:8px 4px 0; }
+
+    .eyebrow{
+      margin:0 0 8px;
+      color:rgba(36,22,11,.58);
+      font-size:12px;
+      font-weight:850;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(34px, 8vw, 56px);
+      line-height:1;
+      letter-spacing:0;
+    }
+
+    .eventDetails{
+      max-width:720px;
+      margin:18px 0 0;
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:7px 12px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.45;
+    }
+
+    .eventDetails dt{
+      color:var(--ink);
+      font-weight:800;
+    }
+
+    .eventDetails dd{ margin:0; }
+
+    .costDetails{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:baseline;
+      gap:5px 12px;
+    }
+
+    .discount{
+      color:var(--accent2);
+      font-size:14px;
+      font-weight:400;
+    }
+
+    .lateFee{
+      width:fit-content;
+      max-width:100%;
+      margin:10px 0 0;
+      padding:7px 10px;
+      border-left:3px solid #d97706;
+      background:rgba(245,158,11,.10);
+      color:rgba(92,45,11,.82);
+      font-size:13px;
+      font-weight:400;
+      line-height:1.4;
+    }
+
+    .panel{
+      padding:22px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,253,248,.86);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+    }
+
+    .stepBar{
+      display:grid;
+      gap:10px;
+      margin-bottom:22px;
+    }
+
+    .stepMeta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      color:rgba(36,22,11,.68);
+      font-size:13px;
+      font-weight:800;
+    }
+
+    .track{
+      height:8px;
+      overflow:hidden;
+      border-radius:999px;
+      background:rgba(92,45,11,.12);
+    }
+
+    .fill{
+      width:50%;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg, #b45309, #f59e0b, #15803d);
+      transition:width .2s ease;
+    }
+
+    .sectionTitle{
+      margin:0 0 4px;
+      font-size:22px;
+      letter-spacing:0;
+    }
+
+    .sectionHint{
+      margin:0 0 20px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    form{
+      display:grid;
+      gap:18px;
+    }
+
+    .grid{
+      display:grid;
+      gap:16px;
+    }
+
+    @media (min-width: 720px){
+      .grid.two{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    }
+
+    .formPage{
+      display:none;
+      gap:18px;
+    }
+
+    .formPage.isActive{
+      display:grid;
+    }
+
+    label{
+      display:grid;
+      gap:7px;
+      min-width:0;
+      font-size:13px;
+      font-weight:800;
+      color:rgba(36,22,11,.74);
+    }
+
+    .optional{
+      color:rgba(36,22,11,.46);
+      font-weight:700;
+    }
+
+    .fieldHint{
+      color:rgba(36,22,11,.44);
+      font-size:12px;
+      font-weight:400;
+      line-height:1.4;
+      min-height:17px;
+    }
+
+    input, select, textarea{
+      width:100%;
+      min-height:48px;
+      padding:12px 13px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.78);
+      color:var(--ink);
+      font:inherit;
+      font-weight:400;
+      box-shadow:0 1px 0 rgba(255,255,255,.65) inset;
+    }
+
+    select,
+    select option{
+      font-weight:400;
+    }
+
+    select{
+      appearance:none;
+      padding-right:42px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b625a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 14px center;
+      background-size:16px;
+    }
+
+    select:invalid,
+    select option[value=""]{
+      color:rgba(36,22,11,.34);
+    }
+
+    select option:not([value=""]){
+      color:var(--ink);
+    }
+
+    textarea{
+      min-height:96px;
+      resize:vertical;
+      line-height:1.45;
+    }
+
+    input:focus, select:focus, textarea:focus{
+      outline:3px solid rgba(180,83,9,.18);
+      border-color:rgba(180,83,9,.48);
+    }
+
+    input::placeholder,
+    textarea::placeholder{
+      color:rgba(36,22,11,.34);
+      font-weight:400;
+    }
+
+    .choiceGroup{
+      display:grid;
+      gap:10px;
+    }
+
+    .choiceLabel{
+      font-size:13px;
+      font-weight:800;
+      color:rgba(36,22,11,.74);
+    }
+
+    .stateChoices{
+      display:grid;
+      gap:10px;
+    }
+
+    @media (min-width: 720px){
+      .stateChoices{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    }
+
+    .stateOption{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-height:50px;
+      padding:12px 13px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.70);
+      color:var(--ink);
+      font-size:14px;
+      font-weight:400;
+      cursor:pointer;
+    }
+
+    .stateOption:has(input:checked){
+      border-color:rgba(180,83,9,.42);
+      background:rgba(254,243,199,.72);
+    }
+
+    .stateOption input{
+      width:18px;
+      min-height:18px;
+      accent-color:var(--accent);
+      box-shadow:none;
+    }
+
+    .otherState{
+      display:none;
+      margin-top:10px;
+    }
+
+    .otherState.isVisible{
+      display:grid;
+    }
+
+    .conditionalField{
+      display:none;
+    }
+
+    .conditionalField.isVisible{
+      display:grid;
+    }
+
+    .followUpQuestion{
+      display:grid;
+      gap:10px;
+      margin-top:8px;
+      padding-top:18px;
+    }
+
+    .error{
+      padding:12px 14px;
+      border:1px solid rgba(220,38,38,.22);
+      border-radius:12px;
+      background:rgba(254,226,226,.76);
+      color:var(--danger);
+      font-weight:800;
+    }
+
+    .actions{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding-top:4px;
+    }
+
+    button{
+      width:100%;
+      min-height:50px;
+      border:1px solid rgba(180,83,9,.28);
+      border-radius:14px;
+      background:linear-gradient(90deg, rgba(180,83,9,.18), rgba(245,158,11,.20), rgba(21,128,61,.12));
+      color:var(--ink);
+      font:inherit;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 14px 34px rgba(180,83,9,.13);
+    }
+
+    .secondaryBtn{
+      background:rgba(255,255,255,.66);
+      box-shadow:none;
+    }
+
+    @media (min-width: 520px){
+      button{ width:auto; min-width:210px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <h1>Register for Retreat</h1>
+      <dl class="eventDetails">
+        <dt>Date</dt>
+        <dd>October 17-18</dd>
+        <dt>Location</dt>
+        <dd>Camp Incarnation, 253 Bushy Hill Rd, Ivoryton, CT 06442</dd>
+        <dt>Cost</dt>
+        <dd class="costDetails">
+          <span class="costAmount">$125</span>
+          <span class="discount">First-time attendees get 50% off</span>
+        </dd>
+      </dl>
+      <p class="lateFee">$10 late fee for registrations after October 9</p>
+    </header>
+
+    <section class="panel">
+      <div class="stepBar" aria-label="Registration progress">
+        <div class="stepMeta">
+          <span id="stepCount">Page 1 of 2</span>
+          <span id="stepName">Contact Info</span>
+        </div>
+        <div class="track" aria-hidden="true"><div id="stepFill" class="fill"></div></div>
+      </div>
+
+      <h2 id="sectionTitle" class="sectionTitle">Contact Info</h2>
+      <p id="sectionHint" class="sectionHint">Start with the basics so we can reach you about retreat.</p>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form id="registrationForm" method="post" action="/register">
+        <div class="formPage isActive" data-page="1">
+          <div class="grid two">
+            <label>
+              Email *
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="{{ registration.email if registration else '' }}" required>
+            </label>
+
+            <label>
+              Phone Number *
+              <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" value="{{ registration.phone if registration else '' }}" required>
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              First Name *
+              <input name="first_name" autocomplete="given-name" value="{{ registration.first_name if registration else '' }}" required>
+            </label>
+
+            <label>
+              Last Name *
+              <input name="last_name" autocomplete="family-name" value="{{ registration.last_name if registration else '' }}" required>
+            </label>
+          </div>
+
+          <label>
+            Gender *
+            <select name="gender" required>
+              <option value="">Select gender</option>
+              {% for option in ['Female', 'Male'] %}
+                <option value="{{ option }}" {% if registration and registration.gender == option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <div class="formPage" data-page="2">
+          <div class="grid two">
+            <label>
+              Name of college or university *
+              <select name="campus" required>
+                <option value="">Select school</option>
+                {% set schools = ['Berklee', 'Boston College', 'Boston University', 'Brandeis', 'Brown', 'CCSU', 'Harvard', 'MIT', 'Northeastern', 'RISD', 'Tufts', 'UConn', 'UMass Amherst', 'UMass Boston', 'UMass Lowell', 'Wellesley', 'Yale'] %}
+                {% for option in schools %}
+                  <option value="{{ option }}" {% if registration and registration.campus == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+                <option value="Other" {% if registration and registration.campus and registration.campus not in schools %}selected{% endif %}>Other</option>
+              </select>
+            </label>
+
+            <label>
+              Status *
+              <select name="status" required>
+                <option value="">Select status</option>
+                {% for option in ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Grad student', 'Other'] %}
+                  <option value="{{ option }}" {% if registration and registration.status == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+
+          <label id="campusOtherWrap" class="conditionalField">
+            Other college or university *
+            <input id="campusOtherInput" name="campus_other" value="{{ registration.campus_other if registration else '' }}">
+          </label>
+
+          <label id="statusOtherWrap" class="conditionalField">
+            Other status *
+            <input id="statusOtherInput" name="status_other" value="{{ registration.status_other if registration else '' }}">
+          </label>
+
+          <div class="choiceGroup">
+            <div class="choiceLabel">State where your school is located *</div>
+            <div class="stateChoices">
+              {% for option in ['Connecticut', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Other'] %}
+                <label class="stateOption">
+                  <input type="radio" name="school_state" value="{{ option }}" {% if registration and (registration.school_state == option or (option == 'Other' and registration.school_state not in ['Connecticut', 'Massachusetts', 'New Hampshire', 'Rhode Island'])) %}checked{% endif %} required>
+                  <span>{{ option }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            <label id="otherStateWrap" class="otherState">
+              Other state *
+              <input id="otherStateInput" name="school_state_other" value="{{ registration.school_state_other if registration else '' }}">
+            </label>
+          </div>
+
+        <label>
+          Allergies &amp; Dietary Restrictions <span class="optional">optional</span>
+          <span class="fieldHint">Please let us know if you have any allergies or dietary restrictions.</span>
+          <textarea name="allergies">{{ registration.allergies if registration else '' }}</textarea>
+        </label>
+
+        <label>
+          Comments <span class="optional">optional</span>
+          <span class="fieldHint">If you are unable to attend full-time, please let us know here.</span>
+          <textarea name="comments">{{ registration.comments if registration else '' }}</textarea>
+        </label>
+        </div>
+
+        <div class="formPage" data-page="3" data-flow="ma">
+          <div class="choiceGroup">
+            <div class="choiceLabel">Car and ride arrangement *</div>
+            <div class="stateChoices">
+              {% for option in ['I need a ride', 'I have a car and can give rides', 'Other'] %}
+                <label class="stateOption">
+                  <input type="radio" name="transportation" value="{{ option }}" {% if registration and registration.transportation == option %}checked{% endif %}>
+                  <span>{{ option }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+            <label id="transportationOtherWrap" class="conditionalField">
+              Other *
+              <input id="transportationOtherInput" name="transportation_other" value="{{ registration.transportation_other if registration else '' }}">
+            </label>
+          </div>
+
+          <label id="carCapacityWrap" class="conditionalField">
+            If you have a car, how many can you take (including yourself)? *
+            <input id="carCapacityInput" type="number" min="1" name="car_capacity" value="{{ registration.car_capacity if registration else '' }}">
+          </label>
+        </div>
+
+        <div class="formPage" data-page="4" data-flow="payment">
+          <div class="choiceGroup">
+            <div class="stateChoices">
+              <label class="stateOption">
+                <input type="radio" name="payment_option" value="scholarship" {% if registration and registration.payment_option == 'scholarship' %}checked{% endif %} required>
+                <span>I’d like to apply for a scholarship for the retreat.</span>
+              </label>
+
+              <label class="stateOption">
+                <input type="radio" name="payment_option" value="pay_full" {% if registration and registration.payment_option == 'pay_full' %}checked{% endif %} required>
+                <span>I’ll pay the full registration amount now.</span>
+              </label>
+            </div>
+
+            <div id="firstRetreatQuestion" class="followUpQuestion">
+              <div class="choiceLabel">Have you joined us for a retreat before? *</div>
+              <div class="stateChoices">
+                <label class="stateOption">
+                  <input type="radio" name="attended_before" value="yes" {% if registration and registration.attended_before == 'yes' %}checked{% endif %}>
+                  <span>Yes</span>
+                </label>
+                <label class="stateOption">
+                  <input type="radio" name="attended_before" value="no" {% if registration and registration.attended_before == 'no' %}checked{% endif %}>
+                  <span>No, this will be my first</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="backButton" class="secondaryBtn" type="button" hidden>Back</button>
+          <button id="nextButton" type="button">Next</button>
+          <button id="submitButton" type="submit" hidden>Continue to Checkout</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('registrationForm');
+    const pages = Array.from(document.querySelectorAll('.formPage'));
+    const stepCount = document.getElementById('stepCount');
+    const stepName = document.getElementById('stepName');
+    const stepFill = document.getElementById('stepFill');
+    const sectionTitle = document.getElementById('sectionTitle');
+    const sectionHint = document.getElementById('sectionHint');
+    const backButton = document.getElementById('backButton');
+    const nextButton = document.getElementById('nextButton');
+    const submitButton = document.getElementById('submitButton');
+    const otherStateWrap = document.getElementById('otherStateWrap');
+    const otherStateInput = document.getElementById('otherStateInput');
+    const transportationOtherWrap = document.getElementById('transportationOtherWrap');
+    const transportationOtherInput = document.getElementById('transportationOtherInput');
+    const carCapacityWrap = document.getElementById('carCapacityWrap');
+    const carCapacityInput = document.getElementById('carCapacityInput');
+    const statusSelect = form.querySelector('select[name="status"]');
+    const statusOtherWrap = document.getElementById('statusOtherWrap');
+    const statusOtherInput = document.getElementById('statusOtherInput');
+    const campusSelect = form.querySelector('select[name="campus"]');
+    const campusOtherWrap = document.getElementById('campusOtherWrap');
+    const campusOtherInput = document.getElementById('campusOtherInput');
+    const attendedBeforeFields = Array.from(form.querySelectorAll('input[name="attended_before"]'));
+    const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
+
+    let currentPage = 0;
+
+    const pageContent = [
+      {
+        name: 'Contact Info',
+        title: 'Contact Info',
+        hint: 'Start with the basics so we can reach you about retreat.'
+      },
+      {
+        name: 'School Info',
+        title: 'School Info',
+        hint: 'Your school state helps us send you through the right coordination flow.'
+      },
+      {
+        name: 'Transportation',
+        title: 'Transportation',
+        hint: 'We will arrange rides from MA to CT.'
+      },
+      {
+        name: 'Payment Options',
+        title: 'Payment Options',
+        hint: 'We don’t want cost to keep anyone from coming. Choose the option that works best for you.'
+      }
+    ];
+
+    function visibleFields(page) {
+      return Array.from(page.querySelectorAll('input, select, textarea'))
+        .filter((field) => !field.disabled && field.offsetParent !== null);
+    }
+
+    function validatePage(index) {
+      const fields = visibleFields(pages[index]);
+      for (const field of fields) {
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function selectedSchoolState() {
+      const selected = form.querySelector('input[name="school_state"]:checked');
+      return selected ? selected.value : '';
+    }
+
+    function isMassachusettsFlow() {
+      return selectedSchoolState() === 'Massachusetts';
+    }
+
+    function isFullTimer() {
+      return statusSelect.value === 'Other' && /full[\s-]*timer/i.test(statusOtherInput.value.trim());
+    }
+
+    function isCcsu() {
+      if (campusSelect.value === 'CCSU') return true;
+      if (campusSelect.value !== 'Other') return false;
+      const campus = campusOtherInput.value.trim();
+      const normalizedCampus = campus.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const compactCampus = normalizedCampus.replace(/\s+/g, '');
+      return compactCampus === 'ccsu' || /\bcentral\s+(?:connecticut|conn|ct)\s+state(?:\s+(?:university|univ|college))?\b/.test(normalizedCampus);
+    }
+
+    function paymentNotRequired() {
+      return isCcsu() || isFullTimer();
+    }
+
+    function activePages() {
+      return pages.filter((page) => {
+        if (page.dataset.flow === 'ma') return isMassachusettsFlow();
+        if (page.dataset.flow === 'payment') return !paymentNotRequired();
+        return true;
+      });
+    }
+
+    function activeIndex() {
+      return activePages().indexOf(pages[currentPage]);
+    }
+
+    function isLastActivePage() {
+      const flowPages = activePages();
+      return pages[currentPage] === flowPages[flowPages.length - 1];
+    }
+
+    function nextActivePageIndex() {
+      const flowPages = activePages();
+      const index = activeIndex();
+      return pages.indexOf(flowPages[Math.min(index + 1, flowPages.length - 1)]);
+    }
+
+    function previousActivePageIndex() {
+      const flowPages = activePages();
+      const index = activeIndex();
+      return pages.indexOf(flowPages[Math.max(index - 1, 0)]);
+    }
+
+    function updateStep() {
+      pages.forEach((page, index) => {
+        page.classList.toggle('isActive', index === currentPage);
+      });
+
+      if (pages[currentPage].dataset.flow === 'ma' && !isMassachusettsFlow()) {
+        currentPage = 1;
+      }
+
+      const flowPages = activePages();
+      const flowIndex = activeIndex();
+      const content = pageContent[currentPage];
+      stepCount.textContent = `Page ${flowIndex + 1} of ${flowPages.length}`;
+      stepName.textContent = content.name;
+      sectionTitle.textContent = content.title;
+      sectionHint.textContent = content.hint;
+      stepFill.style.width = `${((flowIndex + 1) / flowPages.length) * 100}%`;
+
+      backButton.hidden = currentPage === 0;
+      nextButton.hidden = isLastActivePage();
+      submitButton.hidden = !isLastActivePage();
+      submitButton.textContent = paymentNotRequired() ? 'Complete Registration' : 'Continue to Checkout';
+    }
+
+    function updateStateFlow() {
+      const selected = form.querySelector('input[name="school_state"]:checked');
+      const value = selected ? selected.value : '';
+      const isOther = value === 'Other';
+
+      otherStateWrap.classList.toggle('isVisible', isOther);
+      otherStateInput.required = isOther;
+      updateTransportationRequirements();
+      updateStep();
+    }
+
+    function updateTransportationRequirements() {
+      const selected = form.querySelector('input[name="transportation"]:checked');
+      const value = selected ? selected.value : '';
+      const isMa = isMassachusettsFlow();
+      const isOther = isMa && value === 'Other';
+      const hasCar = isMa && value === 'I have a car and can give rides';
+      const transportationFields = Array.from(form.querySelectorAll('input[name="transportation"]'));
+
+      transportationFields.forEach((field) => {
+        field.required = isMa;
+      });
+
+      transportationOtherWrap.classList.toggle('isVisible', isOther);
+      transportationOtherInput.required = isOther;
+      carCapacityWrap.classList.toggle('isVisible', hasCar);
+      carCapacityInput.required = hasCar;
+    }
+
+    function updateStatusOther() {
+      const isOther = statusSelect.value === 'Other';
+      statusOtherWrap.classList.toggle('isVisible', isOther);
+      statusOtherInput.required = isOther;
+      updatePaymentRequirements();
+    }
+
+    function updatePaymentRequirements() {
+      const paymentRequired = !paymentNotRequired();
+      paymentOptionFields.forEach((field) => {
+        field.required = paymentRequired;
+      });
+      attendedBeforeFields.forEach((field) => {
+        field.required = paymentRequired;
+      });
+      updateStep();
+    }
+
+    function updateCampusOther() {
+      const isOther = campusSelect.value === 'Other';
+      campusOtherWrap.classList.toggle('isVisible', isOther);
+      campusOtherInput.required = isOther;
+      updatePaymentRequirements();
+    }
+
+    nextButton.addEventListener('click', () => {
+      if (!validatePage(currentPage)) return;
+      currentPage = nextActivePageIndex();
+      updateStep();
+    });
+
+    backButton.addEventListener('click', () => {
+      currentPage = previousActivePageIndex();
+      updateStep();
+    });
+
+    form.addEventListener('change', (event) => {
+      if (event.target.name === 'school_state') updateStateFlow();
+      if (event.target.name === 'transportation') updateTransportationRequirements();
+      if (event.target.name === 'status') updateStatusOther();
+      if (event.target.name === 'campus') updateCampusOther();
+    });
+
+    statusOtherInput.addEventListener('input', updateStatusOther);
+    campusOtherInput.addEventListener('input', updatePaymentRequirements);
+
+    form.addEventListener('submit', (event) => {
+      if (!validatePage(currentPage)) {
+        event.preventDefault();
+      }
+    });
+
+    updateStateFlow();
+    updateTransportationRequirements();
+    updateStatusOther();
+    updateCampusOther();
+    updateStep();
+  </script>
+</body>
+</html>
