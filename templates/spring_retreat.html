@@ -124,6 +124,20 @@
       --max: 1080px;
     }
 
+    body.season-fall{
+      --bg0:#fff8f0;
+      --bg1:#f5fbf3;
+      --accent1:#b45309;
+      --accent2:#dc2626;
+      --accent3:#15803d;
+      --accent4:#f59e0b;
+      background:
+        radial-gradient(1100px 700px at 50% -10%, rgba(245,158,11,.18), transparent 62%),
+        radial-gradient(900px 620px at 88% 14%, rgba(220,38,38,.13), transparent 60%),
+        radial-gradient(900px 620px at 10% 75%, rgba(21,128,61,.12), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
     *{ box-sizing: border-box; }
     html,body{ height: 100%; }
     body{
@@ -366,6 +380,26 @@
       width:100%;
       height:100%;
       object-fit: cover;
+    }
+
+    .heroImage{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: center;
+      background: #fff;
+    }
+
+    .videoCard.imageCard::before{
+      padding-top: 72%;
+    }
+
+    @media (min-width: 860px){
+      .videoCard.imageCard::before{
+        padding-top: 92%;
+      }
     }
 
     /* “Sunlit spring” overlay */
@@ -1020,7 +1054,7 @@
       .reel-2-section {
         text-align: left;
       }
-      
+
       .section-heading {
         display: none;
       }
@@ -1037,7 +1071,7 @@
   </script>
 </head>
 
-<body>
+<body class="season-spring">
   <div class="progress" aria-hidden="true"></div>
 
   <main id="scroller">
@@ -1048,9 +1082,10 @@
 
       <div class="wrap heroGrid">
         <div class="videoCard reveal">
+
             <video
               id="heroVideo"
-              src="{{ url_for('static', filename='img/SR2025_Reel.mp4') }}"
+              src="/static/img/SR2025_Reel.mp4"
               poster="poster.jpg"
               autoplay
               muted
@@ -1058,6 +1093,8 @@
               playsinline
               preload="metadata"
             ></video>
+
+
             <button id="soundToggle" class="soundToggle" type="button" aria-pressed="false" aria-label="Turn sound on">
               <span class="icon" aria-hidden="true">
                 <svg
@@ -1082,6 +1119,7 @@
               </span>
               <span class="label">Sound</span>
             </button>
+
             <div class="videoOverlay"></div>
         </div>
 
@@ -1096,7 +1134,7 @@
           </p>
 
           <div class="ctaRow reveal">
-            <a class="btn btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A" aria-label="Register now">
+            <a class="btn btnPrimary" href="/register" aria-label="Register now">
               Register
               <span aria-hidden="true">→</span>
             </a>
@@ -1129,24 +1167,30 @@
 
     <!-- DETAILS -->
     <section id="details" class="sectionBg" style="--bg-pos: 50% 0%;">
-      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-details.jpg') }}" alt="" aria-hidden="true" />
+      <img class="sectionPhoto" src="/static/img/bg-details.jpg" alt="" aria-hidden="true" />
       <div class="wrap panel reveal">
         <div class="kicker"><span class="bar"></span> What to expect</div>
         <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Time alone with Jesus. Revelation from the word of God. Companionships in Christ.</h2>
         <p style="margin:0; color: var(--muted); line-height:1.6;">
-          We'll open the Word, sing, pray, and fellowship together, giving the Lord the opportunity to speak to us.
-          Feel free to bring a friend!
+          We&#39;ll open the Word, sing, pray, and fellowship together, giving the Lord the opportunity to speak to us. Feel free to bring a friend!
         </p>
 
         <div class="grid2">
           <div>
             <ul class="list">
+
               <li><span class="check"></span><span><b>Messages from the Bible</b> that help you experience and enjoy Christ.</span></li>
+
               <li><span class="check"></span><span><b>Singing</b> to turn our hearts to the Lord Jesus.</span></li>
+
               <li><span class="check"></span><span><b>Small groups</b> for open conversation and encouragement.</span></li>
-              <li><span class="check"></span><span><b>Rest + fun</b>: games, snow, and snacks.</span></li>
-              <li><span class="check"></span><span><b>Jesus time</b>: personal prayer and time alone with the Lord.</span></li>
-              <li><span class="check"></span><span><b>Practical support</b>: rides, scholarships, and first-time-friendly vibes.</span></li>
+
+              <li><span class="check"></span><span><b>Rest + fun</b> games, snow, and snacks.</span></li>
+
+              <li><span class="check"></span><span><b>Jesus time</b> personal prayer and time alone with the Lord.</span></li>
+
+              <li><span class="check"></span><span><b>Practical support</b> rides, scholarships, and first-time-friendly vibes.</span></li>
+
             </ul>
           </div>
         </div>
@@ -1154,6 +1198,7 @@
     </section>
 
     <!-- SECOND REEL / IG STYLE VIDEO -->
+
     <section id="reel-2">
     <div class="container reel-2-section reveal">
       <h2 class="section-heading">
@@ -1164,7 +1209,7 @@
           <video
               id="reel2"
               class="reel-2-video"
-              src="{{ url_for('static', filename='img/Video-425.mp4') }}"
+              src="/static/img/Video-425.mp4"
               poster="reel-2-poster.jpg"
               autoplay
               muted
@@ -1200,9 +1245,10 @@
     </div>
     </section>
 
+
     <!-- SCHEDULE -->
     <section id="schedule" class="sectionBg" style="--bg-pos: 50% 18%;">
-      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-schedule.jpg') }}" alt="" aria-hidden="true">
+      <img class="sectionPhoto" src="/static/img/bg-schedule.jpg" alt="" aria-hidden="true">
 
       <div class="wrap panel reveal schedulePanel">
         <div class="kicker"><span class="bar"></span> Schedule</div>
@@ -1214,12 +1260,15 @@
         </p>
 
         <div class="scheduleMeta">
+
           <span class="metaChip">Feb 21–22</span>
+
           <span class="metaChip">Sat morning → Sun afternoon</span>
+
         </div>
 
         <div class="dayGrid">
-          <!-- Saturday -->
+
           <div class="dayCard">
             <div class="dayTop">
               <div class="dayName">Saturday</div>
@@ -1227,14 +1276,18 @@
             </div>
 
             <ol class="dayTimeline">
+
               <li><span class="dot"></span><span class="txt">Arrival and settling in</span></li>
+
               <li><span class="dot"></span><span class="txt">Jesus time and messages from the Word</span></li>
+
               <li><span class="dot"></span><span class="txt">Meals, rest, and free time together</span></li>
+
               <li><span class="dot"></span><span class="txt">Group times and fellowship</span></li>
+
             </ol>
           </div>
 
-          <!-- Sunday -->
           <div class="dayCard">
             <div class="dayTop">
               <div class="dayName">Sunday</div>
@@ -1242,22 +1295,34 @@
             </div>
 
             <ol class="dayTimeline">
+
               <li><span class="dot"></span><span class="txt">Jesus time and last message</span></li>
+
               <li><span class="dot"></span><span class="txt">Fellowship and sharing</span></li>
+
               <li><span class="dot"></span><span class="txt">Clean up and photos</span></li>
+
               <li><span class="dot"></span><span class="txt">Drive home</span></li>
+
             </ol>
           </div>
+
         </div>
 
         <div class="scheduleFoot">
           <div class="footTitle">What to bring</div>
           <div class="footList">
-            <span>📖 Bible </span>
-            <span>🧥 Warm clothes </span>
-            <span>🪥 Toiletries </span>
-            <span>🖊️ Pen or pencil </span>
-            <span>🛌 Bedding or sleeping bag </span>
+
+            <span>Bible </span>
+
+            <span>Warm clothes </span>
+
+            <span>Toiletries </span>
+
+            <span>Pen or pencil </span>
+
+            <span>Bedding or sleeping bag </span>
+
           </div>
         </div>
       </div>
@@ -1265,7 +1330,7 @@
 
     <!-- REGISTER -->
     <section id="register" class="sectionBg" style="--bg-pos: 50% 0%;">
-      <img class="sectionPhoto" src="{{ url_for('static', filename='img/bg-register.jpg') }}" alt="" aria-hidden="true" />
+      <img class="sectionPhoto" src="/static/img/bg-register.jpg" alt="" aria-hidden="true" />
       <div class="wrap panel reveal">
         <div class="kicker"><span class="bar"></span> Register</div>
         <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Sign up now!</h2>
@@ -1274,7 +1339,7 @@
         </p>
 
         <div class="ctaRow" style="margin: 0;">
-          <a class="btn btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A">Register here</a>
+          <a class="btn btnPrimary" href="/register">Register here</a>
           <a class="btn" href="mailto:nechristiansoncampus@gmail.com">Ask a question</a>
         </div>
 
@@ -1291,7 +1356,7 @@
       </div>
     </section>
 
-    <a id="floatingRegister" class="floatingRegister btnPrimary" href="https://forms.gle/Tf769eEGfrUZns87A" aria-label="Register">
+    <a id="floatingRegister" class="floatingRegister btnPrimary" href="/register" aria-label="Register">
       Register
       <span class="frIcon" aria-hidden="true">
         <!-- simple arrow svg -->
@@ -1381,7 +1446,7 @@
       });
     }
 
-    // Initialize both reels
+    // Initialize reels that exist on this template
     initSoundToggle('heroVideo', 'soundToggle');
     initSoundToggle('reel2', 'soundToggle2');
 

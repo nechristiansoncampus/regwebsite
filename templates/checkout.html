@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout</title>
+  <style>
+    :root{
+      --bg:#fff7ed;
+      --panel:#fffdf8;
+      --ink:#24160b;
+      --muted:rgba(36,22,11,.64);
+      --line:rgba(92,45,11,.16);
+      --accent:#b45309;
+      --shadow:0 22px 60px rgba(92,45,11,.14);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      min-height:100svh;
+      margin:0;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      color:var(--ink);
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(850px 520px at 20% 10%, rgba(245,158,11,.24), transparent 62%),
+        radial-gradient(760px 480px at 90% 90%, rgba(21,128,61,.14), transparent 62%),
+        linear-gradient(180deg, #fff7ed, #fef3c7 52%, #ecfdf5);
+    }
+
+    .panel{
+      width:min(560px, 100%);
+      padding:24px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,253,248,.84);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(30px, 8vw, 44px);
+      line-height:1.02;
+      letter-spacing:0;
+    }
+
+    p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.55;
+    }
+
+    .summary{
+      display:grid;
+      gap:10px;
+      margin:22px 0;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.52);
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      line-height:1.4;
+    }
+
+    .row span:first-child{
+      color:var(--ink);
+    }
+
+    .row span:last-child{
+      text-align:right;
+      color:var(--muted);
+      font-weight:400;
+    }
+
+    .notice{
+      margin:18px 0 0;
+      padding:12px;
+      border:1px solid rgba(180,83,9,.20);
+      border-radius:12px;
+      background:rgba(254,243,199,.68);
+      color:rgba(36,22,11,.78);
+      font-size:14px;
+    }
+
+    .message{
+      min-height:22px;
+      margin:16px 0;
+      font-weight:750;
+    }
+
+    .message:empty{
+      display:none;
+    }
+
+    .message.error{ color:#991b1b; }
+    .message.success{ color:#166534; }
+
+    .paymentTitle{
+      margin:0 0 12px;
+      font-size:18px;
+      letter-spacing:0;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <h1>Checkout</h1>
+    <p>Review your registration, then pay securely with PayPal.</p>
+
+    <div class="summary">
+      <div class="row"><span>Name</span><span>{{ registration.first_name }} {{ registration.last_name }}</span></div>
+      <div class="row"><span>Email</span><span>{{ registration.email }}</span></div>
+      <div class="row"><span>Phone</span><span>{{ registration.phone }}</span></div>
+      <div class="row"><span>School</span><span>{{ registration.campus }}</span></div>
+      <div class="row"><span>School State</span><span>{{ registration.school_state }}</span></div>
+      <div class="row"><span>Status</span><span>{{ registration.status }}</span></div>
+      {% if registration.transportation %}
+        <div class="row"><span>Transportation</span><span>{{ registration.transportation_other if registration.transportation == 'Other' else registration.transportation }}</span></div>
+      {% endif %}
+      {% if registration.car_capacity %}
+        <div class="row"><span>Car capacity</span><span>{{ registration.car_capacity }}</span></div>
+      {% endif %}
+      {% if registration.attended_before == 'no' %}
+        <div class="row"><span>First-time discount</span><span>50% off</span></div>
+      {% endif %}
+      <div class="row"><span>Total</span><span>${{ amount }}</span></div>
+    </div>
+
+    {% if paypal_client_id %}
+      <h2 class="paymentTitle">Pay with PayPal</h2>
+      <div id="checkout-message" class="message" aria-live="polite">Loading PayPal checkout...</div>
+      <div id="paypal-button-container"></div>
+      <script>
+        const message = document.getElementById('checkout-message');
+
+        function showMessage(text, type) {
+          message.textContent = text;
+          message.className = `message ${type || ''}`;
+        }
+
+        function renderPayPalButtons() {
+          if (!window.paypal || !window.paypal.Buttons) {
+            showMessage('PayPal checkout could not load. Refresh the page or check the PayPal client ID.', 'error');
+            return;
+          }
+
+          paypal.Buttons({
+            style: {
+              layout: 'vertical',
+              color: 'gold',
+              shape: 'rect',
+              label: 'paypal'
+            },
+            async createOrder() {
+              const response = await fetch('/api/paypal/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              const order = await response.json();
+              if (!response.ok) {
+                throw new Error(order.error || 'Unable to create PayPal order.');
+              }
+              return order.id;
+            },
+            async onApprove(data) {
+              const response = await fetch(`/api/paypal/orders/${data.orderID}/capture`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              });
+              const details = await response.json();
+              if (!response.ok) {
+                throw new Error(details.error || 'Unable to capture PayPal payment.');
+              }
+              showMessage('Payment received. You are registered for retreat.', 'success');
+            },
+            onCancel() {
+              showMessage('Checkout cancelled. No payment was taken.');
+            },
+            onError(error) {
+              showMessage(error.message || 'Something went wrong with PayPal checkout.', 'error');
+            }
+          }).render('#paypal-button-container')
+            .then(() => showMessage(''))
+            .catch((error) => {
+              showMessage(error.message || 'PayPal checkout could not render.', 'error');
+            });
+        }
+
+        const paypalScript = document.createElement('script');
+        paypalScript.src = 'https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture';
+        paypalScript.onload = renderPayPalButtons;
+        paypalScript.onerror = () => {
+          showMessage('PayPal checkout could not load. Check your internet connection and PayPal client ID.', 'error');
+        };
+        document.head.appendChild(paypalScript);
+      </script>
+    {% else %}
+      <div class="notice">
+        PayPal is not configured yet. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET to enable checkout.
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>
