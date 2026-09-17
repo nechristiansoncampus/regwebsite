@@ -158,7 +158,7 @@ class RouteTests(unittest.TestCase):
         self.assertNotIn(b'Pay with PayPal', response.data)
 
     def test_full_timer_finishes_without_payment(self):
-        for status in ['full-timer', 'Full Timer', 'fulltimer']:
+        for status in ['full-timer', 'Full Timer', 'fulltimer', 'full time', 'FT', 'F.T.', 'F/T']:
             with self.subTest(status=status):
                 response = self.client.post(
                     '/register',
@@ -170,6 +170,24 @@ class RouteTests(unittest.TestCase):
                     ),
                 )
                 self.assertIn(b'No payment is required.', response.data)
+
+    @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
+    def test_other_status_skips_attendance_question_without_discount(self):
+        for attended_before in ['', 'no']:
+            with self.subTest(attended_before=attended_before):
+                response = self.client.post(
+                    '/register',
+                    data=registration_data(
+                        status='Other',
+                        status_other='Volunteer',
+                        attended_before=attended_before,
+                    ),
+                )
+                self.assertIn(b'<h1>Checkout</h1>', response.data)
+                self.assertIn(b'$125.00', response.data)
+                recorded = self.record_registration.call_args.args[0]
+                self.assertEqual(recorded['attended_before'], '')
+                self.record_registration.reset_mock()
 
     def test_ccsu_variants_finish_with_contact_message(self):
         variants = [
@@ -215,6 +233,14 @@ class RegistrationRuleTests(unittest.TestCase):
         for campus in ['UConn', 'Connecticut College', 'Eastern Connecticut State University']:
             with self.subTest(campus=campus):
                 self.assertFalse(registration.is_ccsu({'campus': campus}))
+
+    def test_ft_matching_does_not_match_full_time_student(self):
+        self.assertFalse(registration.is_full_timer({'status': 'full-time student'}))
+        self.assertFalse(registration.is_full_timer({'status': 'FT student'}))
+        self.assertFalse(registration.is_full_timer({
+            'status': 'Senior',
+            'status_other': 'FT',
+        }))
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):
