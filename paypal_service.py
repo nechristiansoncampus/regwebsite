@@ -50,6 +50,13 @@ def create_order(amount, registration_id):
             },
             json={
                 'intent': 'CAPTURE',
+                'payment_source': {
+                    'paypal': {
+                        'experience_context': {
+                            'shipping_preference': 'NO_SHIPPING',
+                        },
+                    },
+                },
                 'purchase_units': [{
                     'description': 'Retreat registration',
                     'custom_id': registration_id,
