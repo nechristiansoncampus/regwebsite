@@ -66,6 +66,13 @@ class RouteTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
+    def test_home_page_defaults_to_fall_retreat(self):
+        home_page = self.client.get('/').get_data(as_text=True)
+        spring_page = self.client.get('/spring-retreat').get_data(as_text=True)
+
+        self.assertIn('<title>Fall Retreat', home_page)
+        self.assertIn('Spring Retreat</title>', spring_page)
+
     def test_registration_page_contains_school_options(self):
         html = self.client.get('/register').get_data(as_text=True)
         schools = [

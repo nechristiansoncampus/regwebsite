@@ -46,7 +46,7 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-me')
 
 @app.route("/", methods=['post', 'get'])
 def home():
-    return render_template('spring_retreat.html')
+    return render_template('fall_retreat.html')
 
 @app.route("/spring-retreat", methods=['get'])
 def spring_retreat():
