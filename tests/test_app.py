@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 import google_sheets
@@ -46,6 +47,11 @@ class FakeResponse:
 
 class RouteTests(unittest.TestCase):
     def setUp(self):
+        self.late_fee_patcher = patch.dict(
+            os.environ,
+            {'RETREAT_LATE_FEE_START': '2999-10-10T00:00:00-04:00'},
+        )
+        self.late_fee_patcher.start()
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
         self.client = home.app.test_client()
         self.sheet_patcher = patch.object(home, 'record_registration')
@@ -53,6 +59,7 @@ class RouteTests(unittest.TestCase):
 
     def tearDown(self):
         self.sheet_patcher.stop()
+        self.late_fee_patcher.stop()
 
     def test_public_pages_render(self):
         for path in ['/', '/spring-retreat', '/fall-retreat', '/register', '/check-in']:
@@ -193,12 +200,44 @@ class RegistrationRuleTests(unittest.TestCase):
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):
-        self.assertEqual(registration.registration_amount({'attended_before': 'yes'}), '125.00')
-        self.assertEqual(registration.registration_amount({'attended_before': 'no'}), '62.50')
+        before_cutoff = datetime(2026, 10, 10, 3, 59, 59, tzinfo=timezone.utc)
+        self.assertEqual(
+            registration.registration_amount({'attended_before': 'yes'}, before_cutoff),
+            '125.00',
+        )
+        self.assertEqual(
+            registration.registration_amount({'attended_before': 'no'}, before_cutoff),
+            '62.50',
+        )
+
+    @patch.dict(
+        os.environ,
+        {
+            'RETREAT_REGISTRATION_AMOUNT': '125.00',
+            'RETREAT_LATE_FEE_AMOUNT': '10.00',
+            'RETREAT_LATE_FEE_START': '2026-10-10T00:00:00-04:00',
+        },
+        clear=False,
+    )
+    def test_late_fee_starts_at_midnight_eastern_after_discount(self):
+        at_cutoff = datetime(2026, 10, 10, 4, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(registration.late_fee_amount(at_cutoff), 10)
+        self.assertEqual(
+            registration.registration_amount({'attended_before': 'yes'}, at_cutoff),
+            '135.00',
+        )
+        self.assertEqual(
+            registration.registration_amount({'attended_before': 'no'}, at_cutoff),
+            '72.50',
+        )
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': 'invalid'}, clear=False)
     def test_invalid_configured_amount_uses_default(self):
-        self.assertEqual(registration.registration_amount({'attended_before': 'yes'}), '125.00')
+        before_cutoff = datetime(2026, 10, 10, 3, 59, 59, tzinfo=timezone.utc)
+        self.assertEqual(
+            registration.registration_amount({'attended_before': 'yes'}, before_cutoff),
+            '125.00',
+        )
 
     def test_initial_payment_status(self):
         self.assertEqual(
@@ -216,6 +255,16 @@ class RegistrationRuleTests(unittest.TestCase):
 
 
 class SheetTests(unittest.TestCase):
+    def setUp(self):
+        self.late_fee_patcher = patch.dict(
+            os.environ,
+            {'RETREAT_LATE_FEE_START': '2999-10-10T00:00:00-04:00'},
+        )
+        self.late_fee_patcher.start()
+
+    def tearDown(self):
+        self.late_fee_patcher.stop()
+
     def test_record_registration_writes_every_column(self):
         worksheet = Mock()
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
@@ -277,11 +326,32 @@ class SheetTests(unittest.TestCase):
         sheets_client.open.assert_called_once_with('2026 Fall Retreat - Registration (Responses)')
         spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
 
+    def test_sheet_adds_new_columns_to_existing_valid_headers(self):
+        worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:-1]
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        worksheet.update_row.assert_called_once_with(1, google_sheets.REGISTRATION_HEADERS)
+
 
 class PayPalTests(unittest.TestCase):
     def setUp(self):
+        self.late_fee_patcher = patch.dict(
+            os.environ,
+            {'RETREAT_LATE_FEE_START': '2999-10-10T00:00:00-04:00'},
+        )
+        self.late_fee_patcher.start()
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
         self.client = home.app.test_client()
+
+    def tearDown(self):
+        self.late_fee_patcher.stop()
 
     def set_registration_session(self, registration=None, paypal_order_id=None):
         with self.client.session_transaction() as session:

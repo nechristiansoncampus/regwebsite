@@ -32,6 +32,7 @@ REGISTRATION_HEADERS = [
     'PayPal Order ID',
     'PayPal Capture ID',
     'Paid At',
+    'Late Fee',
 ]
 
 
@@ -61,7 +62,10 @@ def registration_worksheet():
     current_headers = worksheet.get_row(1, include_tailing_empty=False)
     if not current_headers:
         worksheet.update_row(1, REGISTRATION_HEADERS)
-    elif current_headers[:len(REGISTRATION_HEADERS)] != REGISTRATION_HEADERS:
+    elif current_headers == REGISTRATION_HEADERS[:len(current_headers)]:
+        if len(current_headers) < len(REGISTRATION_HEADERS):
+            worksheet.update_row(1, REGISTRATION_HEADERS)
+    else:
         raise RuntimeError(
             f'The "{worksheet_title}" worksheet headers do not match the registration form.'
         )
@@ -78,8 +82,8 @@ def record_registration(registration, registration_id):
     elif registration.get('attended_before') == 'yes':
         first_time = 'No'
 
-    amount_due = ''
-    if registration.get('payment_option') == 'pay_full':
+    amount_due = registration.get('amount_due', '')
+    if registration.get('payment_option') == 'pay_full' and not amount_due:
         amount_due = registration_amount(registration)
 
     worksheet.append_table(values=[
@@ -108,6 +112,7 @@ def record_registration(registration, registration_id):
         '',
         '',
         '',
+        registration.get('late_fee', ''),
     ], start='A1')
 
 

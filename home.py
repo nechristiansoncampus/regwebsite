@@ -4,6 +4,7 @@ from flask import jsonify, render_template, request, session
 import os
 import re
 import secrets
+from datetime import datetime, timezone
 
 import pygsheets
 
@@ -11,6 +12,7 @@ from google_sheets import record_registration, update_registration_payment
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
     is_ccsu,
+    late_fee_amount,
     parse_registration,
     payment_not_required,
     registration_amount,
@@ -71,6 +73,14 @@ def register():
             registration['payment_option'] = 'not_required'
             registration['attended_before'] = ''
 
+        if registration['payment_option'] == 'pay_full':
+            submitted_at = datetime.now(timezone.utc)
+            registration['late_fee'] = f'{late_fee_amount(submitted_at):.2f}'
+            registration['amount_due'] = registration_amount(registration, submitted_at)
+        else:
+            registration['late_fee'] = ''
+            registration['amount_due'] = ''
+
         registration_token = secrets.token_urlsafe(16)
         try:
             record_registration(registration, registration_token)
@@ -98,7 +108,8 @@ def register():
             'checkout.html',
             registration=registration,
             paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-            amount=registration_amount(registration),
+            amount=registration['amount_due'],
+            late_fee=registration['late_fee'],
         )
 
     return render_template('register.html')
@@ -120,7 +131,8 @@ def checkout():
         'checkout.html',
         registration=registration,
         paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-        amount=registration_amount(registration),
+        amount=registration.get('amount_due') or registration_amount(registration),
+        late_fee=registration.get('late_fee', ''),
     )
 
 @app.route("/api/paypal/orders", methods=['post'])
@@ -132,7 +144,7 @@ def create_paypal_order():
     if payment_not_required(registration):
         return jsonify({'error': 'Payment is not required for this registration.'}), 400
 
-    amount = registration_amount(registration)
+    amount = registration.get('amount_due') or registration_amount(registration)
 
     try:
         order = create_order(amount, session.get('registration_token'))

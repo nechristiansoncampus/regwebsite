@@ -1,6 +1,7 @@
 import os
 import re
 from decimal import Decimal, InvalidOperation
+from datetime import datetime, timezone
 
 
 EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
@@ -73,7 +74,35 @@ def validate_registration(registration):
     return None
 
 
-def registration_amount(registration):
+def late_fee_amount(now=None):
+    cutoff_text = os.environ.get(
+        'RETREAT_LATE_FEE_START',
+        '2026-10-10T00:00:00-04:00',
+    )
+    if not cutoff_text:
+        return Decimal('0.00')
+
+    try:
+        cutoff = datetime.fromisoformat(cutoff_text)
+    except ValueError as error:
+        raise RuntimeError('RETREAT_LATE_FEE_START must be an ISO 8601 timestamp.') from error
+    if cutoff.tzinfo is None:
+        raise RuntimeError('RETREAT_LATE_FEE_START must include a UTC offset.')
+
+    current_time = now or datetime.now(timezone.utc)
+    if current_time.tzinfo is None:
+        raise ValueError('The current time must include timezone information.')
+    if current_time < cutoff:
+        return Decimal('0.00')
+
+    configured_fee = os.environ.get('RETREAT_LATE_FEE_AMOUNT', '10.00')
+    try:
+        return Decimal(configured_fee).quantize(Decimal('0.01'))
+    except InvalidOperation:
+        return Decimal('10.00')
+
+
+def registration_amount(registration, now=None):
     configured_amount = os.environ.get('RETREAT_REGISTRATION_AMOUNT', '125.00')
     try:
         amount = Decimal(configured_amount)
@@ -82,6 +111,8 @@ def registration_amount(registration):
 
     if registration.get('attended_before') == 'no':
         amount *= Decimal('0.50')
+
+    amount += late_fee_amount(now)
 
     return f'{amount.quantize(Decimal("0.01"))}'
 
