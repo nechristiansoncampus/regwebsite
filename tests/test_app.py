@@ -73,6 +73,12 @@ class RouteTests(unittest.TestCase):
         self.assertIn('<title>Fall Retreat', home_page)
         self.assertIn('Spring Retreat</title>', spring_page)
 
+    def test_home_page_question_link_uses_browser_email_compose(self):
+        home_page = self.client.get('/').get_data(as_text=True)
+        self.assertIn('https://mail.google.com/mail/?view=cm&amp;fs=1', home_page)
+        self.assertIn('to=nechristiansoncampus@gmail.com', home_page)
+        self.assertNotIn('mailto:', home_page)
+
     def test_registration_page_contains_school_options(self):
         html = self.client.get('/register').get_data(as_text=True)
         schools = [
