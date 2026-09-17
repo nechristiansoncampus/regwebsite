@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import jsonify, render_template, request, session
+from flask import jsonify, redirect, render_template, request, session, url_for
 
 import os
 import re
@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 import pygsheets
 
-from google_sheets import record_registration, update_registration_payment
+from google_sheets import record_registration
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
     is_ccsu,
@@ -90,18 +90,19 @@ def register():
             registration['amount_due'] = ''
 
         registration_token = secrets.token_urlsafe(16)
-        try:
-            record_registration(registration, registration_token)
-        except Exception:
-            app.logger.exception('Unable to save registration to Google Sheets.')
-            return render_template(
-                'register.html',
-                error='We could not save your registration. Please try again.',
-                registration=registration,
-            )
-
         session['registration'] = registration
         session['registration_token'] = registration_token
+        if no_payment or registration['payment_option'] == 'scholarship':
+            try:
+                record_registration(registration, registration_token)
+            except Exception:
+                app.logger.exception('Unable to save registration to Google Sheets.')
+                return render_template(
+                    'register.html',
+                    error='We could not save your registration. Please try again.',
+                    registration=registration,
+                )
+
         if no_payment:
             return render_template(
                 'registration_confirmation.html',
@@ -160,17 +161,6 @@ def create_paypal_order():
         return jsonify({'error': str(error)}), 500
 
     session['paypal_order_id'] = order.get('id')
-    try:
-        update_registration_payment(
-            session.get('registration_token'),
-            **{
-                'Payment Status': 'PayPal checkout started',
-                'PayPal Order ID': order.get('id', ''),
-            },
-        )
-    except Exception:
-        app.logger.exception('Unable to update the PayPal order in Google Sheets.')
-
     return jsonify(order)
 
 @app.route("/api/paypal/orders/<order_id>/capture", methods=['post'])
@@ -185,6 +175,9 @@ def capture_paypal_order(order_id):
     if not session.get('paypal_order_id') or order_id != session.get('paypal_order_id'):
         return jsonify({'error': 'PayPal order does not match this registration.'}), 400
 
+    if session.get('payment_completed'):
+        return save_paid_registration(registration)
+
     try:
         capture = capture_order(order_id)
     except PayPalError as error:
@@ -195,21 +188,55 @@ def capture_paypal_order(order_id):
         .get('payments', {})
         .get('captures', [{}])[0]
     )
-    payment_status = 'Paid' if capture_details.get('status') == 'COMPLETED' else capture_details.get('status', 'Captured')
-    try:
-        update_registration_payment(
-            session.get('registration_token'),
-            **{
-                'Payment Status': payment_status,
-                'PayPal Order ID': capture.get('id', order_id),
-                'PayPal Capture ID': capture_details.get('id', ''),
-                'Paid At': capture_details.get('create_time', ''),
-            },
-        )
-    except Exception:
-        app.logger.exception('Unable to update the completed payment in Google Sheets.')
+    if capture_details.get('status') != 'COMPLETED':
+        return jsonify(capture)
 
-    return jsonify(capture)
+    registration.update({
+        'payment_status': 'Paid',
+        'paypal_order_id': capture.get('id', order_id),
+        'paypal_capture_id': capture_details.get('id', ''),
+        'paid_at': capture_details.get('create_time', ''),
+    })
+    session['registration'] = registration
+    session['payment_completed'] = True
+    return save_paid_registration(registration)
+
+
+def save_paid_registration(registration):
+    try:
+        record_registration(registration, session.get('registration_token'))
+    except Exception:
+        app.logger.exception('Payment completed but registration could not be saved.')
+        return jsonify({
+            'error': (
+                'Your payment was received, but we could not save your registration. '
+                'Please contact us and do not submit another payment.'
+            ),
+            'payment_completed': True,
+        }), 500
+
+    session['completed_registration'] = {
+        'first_name': registration.get('first_name', ''),
+    }
+    session.pop('registration', None)
+    session.pop('registration_token', None)
+    session.pop('paypal_order_id', None)
+    session.pop('payment_completed', None)
+    return jsonify({
+        'status': 'COMPLETED',
+        'redirect_url': url_for('registration_complete'),
+    })
+
+
+@app.route('/registration-complete', methods=['get'])
+def registration_complete():
+    completed_registration = session.get('completed_registration')
+    if not completed_registration:
+        return redirect(url_for('register'))
+    return render_template(
+        'payment_confirmation.html',
+        registration=completed_registration,
+    )
 
 @app.route("/info", methods=['post', 'get'])
 def info():

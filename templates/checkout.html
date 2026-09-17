@@ -182,7 +182,11 @@
               if (!response.ok) {
                 throw new Error(details.error || 'Unable to capture PayPal payment.');
               }
-              showMessage('Payment received. You are registered for retreat.', 'success');
+              if (details.redirect_url) {
+                window.location.assign(details.redirect_url);
+                return;
+              }
+              throw new Error('Payment is still processing. Please contact us before trying again.');
             },
             onCancel() {
               showMessage('Checkout cancelled. No payment was taken.');
