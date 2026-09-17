@@ -552,6 +552,10 @@ class PayPalServiceTests(unittest.TestCase):
         payload = requests_post.call_args.kwargs['json']
         self.assertEqual(payload['purchase_units'][0]['amount']['value'], '62.50')
         self.assertEqual(payload['purchase_units'][0]['custom_id'], 'registration-123')
+        self.assertEqual(
+            payload['payment_source']['paypal']['experience_context']['shipping_preference'],
+            'NO_SHIPPING',
+        )
 
     @patch.object(paypal_service, 'get_paypal_access_token', return_value='access-token')
     @patch.object(paypal_service.requests, 'post')
