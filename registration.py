@@ -102,12 +102,23 @@ def late_fee_amount(now=None):
         return Decimal('10.00')
 
 
-def registration_amount(registration, now=None):
+def base_registration_amount():
     configured_amount = os.environ.get('RETREAT_REGISTRATION_AMOUNT', '125.00')
     try:
-        amount = Decimal(configured_amount)
+        return Decimal(configured_amount).quantize(Decimal('0.01'))
     except InvalidOperation:
-        amount = Decimal('125.00')
+        return Decimal('125.00')
+
+
+def registration_amount_display():
+    amount = base_registration_amount()
+    if amount == amount.to_integral():
+        return f'{amount:,.0f}'
+    return f'{amount:,.2f}'
+
+
+def registration_amount(registration, now=None):
+    amount = base_registration_amount()
 
     if registration.get('attended_before') == 'no':
         amount *= Decimal('0.50')

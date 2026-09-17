@@ -83,6 +83,11 @@ class RouteTests(unittest.TestCase):
         positions = [html.index(f'value="{school}"') for school in schools]
         self.assertEqual(positions, sorted(positions))
 
+    @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '149.50'}, clear=False)
+    def test_registration_page_uses_configured_amount(self):
+        html = self.client.get('/register').get_data(as_text=True)
+        self.assertIn('<span class="costAmount">$149.50</span>', html)
+
     def test_required_fields_are_validated(self):
         response = self.client.post('/register', data=registration_data(email=''))
         self.assertIn(b'Please fill out every field.', response.data)

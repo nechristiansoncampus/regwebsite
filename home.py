@@ -16,6 +16,7 @@ from registration import (
     parse_registration,
     payment_not_required,
     registration_amount,
+    registration_amount_display,
     validate_registration,
 )
 
@@ -42,6 +43,11 @@ def load_local_env():
 load_local_env()
 
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-me')
+
+
+@app.context_processor
+def registration_config():
+    return {'registration_amount_display': registration_amount_display()}
 
 
 @app.route("/", methods=['post', 'get'])
