@@ -147,7 +147,7 @@ class RouteTests(unittest.TestCase):
     def test_returning_attendee_reaches_checkout(self):
         response = self.client.post('/register', data=registration_data())
         self.assertIn(b'<h1>Checkout</h1>', response.data)
-        self.record_registration.assert_called_once()
+        self.record_registration.assert_not_called()
 
     def test_scholarship_choice_finishes_without_checkout(self):
         response = self.client.post(
@@ -185,9 +185,9 @@ class RouteTests(unittest.TestCase):
                 )
                 self.assertIn(b'<h1>Checkout</h1>', response.data)
                 self.assertIn(b'$125.00', response.data)
-                recorded = self.record_registration.call_args.args[0]
-                self.assertEqual(recorded['attended_before'], '')
-                self.record_registration.reset_mock()
+                self.record_registration.assert_not_called()
+                with self.client.session_transaction() as session:
+                    self.assertEqual(session['registration']['attended_before'], '')
 
     def test_ccsu_variants_finish_with_contact_message(self):
         variants = [
@@ -212,7 +212,11 @@ class RouteTests(unittest.TestCase):
     def test_other_school_is_normalized_before_recording(self):
         self.client.post(
             '/register',
-            data=registration_data(campus='Other', campus_other='Emerson College'),
+            data=registration_data(
+                campus='Other',
+                campus_other='Emerson College',
+                payment_option='scholarship',
+            ),
         )
         recorded = self.record_registration.call_args.args[0]
         self.assertEqual(recorded['campus'], 'Emerson College')
@@ -220,7 +224,10 @@ class RouteTests(unittest.TestCase):
     def test_sheet_failure_keeps_user_on_registration(self):
         self.record_registration.side_effect = RuntimeError('Google unavailable')
         with patch.object(home.app.logger, 'exception'):
-            response = self.client.post('/register', data=registration_data())
+            response = self.client.post(
+                '/register',
+                data=registration_data(payment_option='scholarship'),
+            )
         self.assertIn(b'We could not save your registration.', response.data)
 
     def test_checkout_requires_registration_session(self):
@@ -311,6 +318,7 @@ class SheetTests(unittest.TestCase):
 
     def test_record_registration_writes_every_column(self):
         worksheet = Mock()
+        worksheet.get_col.return_value = ['Registration ID']
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.record_registration(
                 registration_data(
@@ -329,6 +337,14 @@ class SheetTests(unittest.TestCase):
         self.assertEqual(values['Comments'], 'Arriving late')
         self.assertEqual(values['First-Time Attendee'], 'Yes')
         self.assertEqual(values['Amount Due'], '62.50')
+
+    def test_record_registration_does_not_duplicate_registration_id(self):
+        worksheet = Mock()
+        worksheet.get_col.return_value = ['Registration ID', 'registration-123']
+        with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
+            google_sheets.record_registration(registration_data(), 'registration-123')
+
+        worksheet.append_table.assert_not_called()
 
     def test_payment_update_targets_registration_row(self):
         worksheet = Mock()
@@ -415,11 +431,8 @@ class PayPalTests(unittest.TestCase):
         self.assertIn('Payment is not required', response.get_json()['error'])
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
-    @patch.object(home, 'update_registration_payment')
     @patch.object(home, 'create_order')
-    def test_create_order_uses_registration_amount(
-        self, create_order, update_payment
-    ):
+    def test_create_order_uses_registration_amount(self, create_order):
         create_order.return_value = {'id': 'ORDER-1', 'status': 'CREATED'}
         self.set_registration_session(registration_data(attended_before='no'))
 
@@ -429,18 +442,11 @@ class PayPalTests(unittest.TestCase):
         create_order.assert_called_once_with('62.50', 'registration-123')
         with self.client.session_transaction() as session:
             self.assertEqual(session['paypal_order_id'], 'ORDER-1')
-        update_payment.assert_called_once_with(
-            'registration-123',
-            **{
-                'Payment Status': 'PayPal checkout started',
-                'PayPal Order ID': 'ORDER-1',
-            },
-        )
 
-    @patch.object(home, 'update_registration_payment')
+    @patch.object(home, 'record_registration')
     @patch.object(home, 'capture_order')
-    def test_capture_marks_sheet_row_paid(
-        self, capture_order, update_payment
+    def test_completed_capture_records_registration_and_returns_redirect(
+        self, capture_order, record_registration
     ):
         capture = {
             'id': 'ORDER-1',
@@ -458,17 +464,57 @@ class PayPalTests(unittest.TestCase):
         response = self.client.post('/api/paypal/orders/ORDER-1/capture')
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()['redirect_url'], '/registration-complete')
+        recorded, registration_id = record_registration.call_args.args
+        self.assertEqual(registration_id, 'registration-123')
+        self.assertEqual(recorded['payment_status'], 'Paid')
+        self.assertEqual(recorded['paypal_order_id'], 'ORDER-1')
+        self.assertEqual(recorded['paypal_capture_id'], 'CAPTURE-1')
+        self.assertEqual(recorded['paid_at'], '2026-09-16T12:00:00Z')
         with self.client.session_transaction() as session:
-            self.assertNotIn('payment', session)
-        update_payment.assert_called_once_with(
-            'registration-123',
-            **{
-                'Payment Status': 'Paid',
-                'PayPal Order ID': 'ORDER-1',
-                'PayPal Capture ID': 'CAPTURE-1',
-                'Paid At': '2026-09-16T12:00:00Z',
-            },
-        )
+            self.assertNotIn('registration', session)
+            self.assertEqual(session['completed_registration']['first_name'], 'Jamie')
+
+        confirmation = self.client.get('/registration-complete')
+        self.assertIn(b'You\xe2\x80\x99re registered', confirmation.data)
+        self.assertIn(b'See you there, Jamie!', confirmation.data)
+        self.assertIn(b'href="/"', confirmation.data)
+
+    @patch.object(home, 'record_registration')
+    @patch.object(home, 'capture_order')
+    def test_sheet_failure_after_capture_warns_not_to_pay_again(
+        self, capture_order, record_registration
+    ):
+        capture_order.return_value = {
+            'id': 'ORDER-1',
+            'purchase_units': [{
+                'payments': {'captures': [{
+                    'id': 'CAPTURE-1',
+                    'status': 'COMPLETED',
+                    'create_time': '2026-09-16T12:00:00Z',
+                }]},
+            }],
+        }
+        record_registration.side_effect = RuntimeError('Google unavailable')
+        self.set_registration_session(paypal_order_id='ORDER-1')
+
+        with patch.object(home.app.logger, 'exception'):
+            response = self.client.post('/api/paypal/orders/ORDER-1/capture')
+
+        self.assertEqual(response.status_code, 500)
+        self.assertTrue(response.get_json()['payment_completed'])
+        self.assertIn('do not submit another payment', response.get_json()['error'])
+
+        record_registration.side_effect = None
+        retry = self.client.post('/api/paypal/orders/ORDER-1/capture')
+        self.assertEqual(retry.status_code, 200)
+        self.assertEqual(retry.get_json()['redirect_url'], '/registration-complete')
+        capture_order.assert_called_once_with('ORDER-1')
+
+    def test_completion_page_requires_completed_payment(self):
+        response = self.client.get('/registration-complete')
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.headers['Location'].endswith('/register'))
 
     @patch.object(home, 'capture_order')
     def test_capture_rejects_order_from_another_registration(self, capture_order):

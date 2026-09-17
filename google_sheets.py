@@ -76,6 +76,10 @@ def registration_worksheet():
 def record_registration(registration, registration_id):
     worksheet = registration_worksheet()
 
+    registration_ids = worksheet.get_col(1, include_tailing_empty=False)
+    if registration_id in registration_ids:
+        return
+
     first_time = ''
     if registration.get('attended_before') == 'no':
         first_time = 'Yes'
@@ -108,10 +112,10 @@ def record_registration(registration, registration_id):
         registration.get('payment_option', ''),
         first_time,
         amount_due,
-        initial_payment_status(registration),
-        '',
-        '',
-        '',
+        registration.get('payment_status') or initial_payment_status(registration),
+        registration.get('paypal_order_id', ''),
+        registration.get('paypal_capture_id', ''),
+        registration.get('paid_at', ''),
         registration.get('late_fee', ''),
     ], start='A1')
 
