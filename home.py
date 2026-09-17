@@ -12,6 +12,7 @@ from google_sheets import record_registration, update_registration_payment
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
     is_ccsu,
+    is_other_status,
     late_fee_amount,
     parse_registration,
     payment_not_required,
@@ -75,9 +76,10 @@ def register():
             )
 
         no_payment = payment_not_required(registration)
+        if no_payment or is_other_status(registration):
+            registration['attended_before'] = ''
         if no_payment:
             registration['payment_option'] = 'not_required'
-            registration['attended_before'] = ''
 
         if registration['payment_option'] == 'pay_full':
             submitted_at = datetime.now(timezone.utc)

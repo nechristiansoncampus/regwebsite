@@ -8,6 +8,7 @@ EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
 def parse_registration(form):
+    status_selection = form.get('status', '').strip()
     registration = {
         'email': form.get('email', '').strip(),
         'first_name': form.get('first_name', '').strip(),
@@ -18,8 +19,9 @@ def parse_registration(form):
         'campus_other': form.get('campus_other', '').strip(),
         'school_state': form.get('school_state', '').strip(),
         'school_state_other': form.get('school_state_other', '').strip(),
-        'status': form.get('status', '').strip(),
+        'status': status_selection,
         'status_other': form.get('status_other', '').strip(),
+        'status_is_other': status_selection == 'Other',
         'transportation': form.get('transportation', '').strip(),
         'transportation_other': form.get('transportation_other', '').strip(),
         'car_capacity': form.get('car_capacity', '').strip(),
@@ -33,7 +35,7 @@ def parse_registration(form):
         registration['school_state'] = registration['school_state_other']
     if registration['campus'] == 'Other':
         registration['campus'] = registration['campus_other']
-    if registration['status'] == 'Other':
+    if registration['status_is_other']:
         registration['status'] = registration['status_other']
 
     return registration
@@ -68,7 +70,7 @@ def validate_registration(registration):
     if not payment_not_required(registration):
         if registration['payment_option'] not in ['scholarship', 'pay_full']:
             return 'Please choose a payment option.'
-        if registration['attended_before'] not in ['yes', 'no']:
+        if not is_other_status(registration) and registration['attended_before'] not in ['yes', 'no']:
             return 'Please let us know if you have attended one of our retreats before.'
 
     return None
@@ -120,7 +122,7 @@ def registration_amount_display():
 def registration_amount(registration, now=None):
     amount = base_registration_amount()
 
-    if registration.get('attended_before') == 'no':
+    if registration.get('attended_before') == 'no' and not is_other_status(registration):
         amount *= Decimal('0.50')
 
     amount += late_fee_amount(now)
@@ -128,9 +130,16 @@ def registration_amount(registration, now=None):
     return f'{amount.quantize(Decimal("0.01"))}'
 
 
+def is_other_status(registration):
+    return registration.get('status_is_other', False) or registration.get('status') == 'Other'
+
+
 def is_full_timer(registration):
-    status = registration.get('status', '')
-    return bool(re.search(r'full[\s-]*timer', status, re.IGNORECASE))
+    if not is_other_status(registration):
+        return False
+    status = registration.get('status_other') or registration.get('status', '')
+    compact_status = re.sub(r'[^a-z0-9]+', '', status.casefold())
+    return compact_status in {'ft', 'fulltime', 'fulltimer'}
 
 
 def is_ccsu(registration):

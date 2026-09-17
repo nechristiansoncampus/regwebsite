@@ -321,6 +321,8 @@
       padding-top:18px;
     }
 
+    .followUpQuestion[hidden]{ display:none; }
+
     .error{
       padding:12px 14px;
       border:1px solid rgba(220,38,38,.22);
@@ -450,7 +452,7 @@
               <select name="status" required>
                 <option value="">Select status</option>
                 {% for option in ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Grad student', 'Other'] %}
-                  <option value="{{ option }}" {% if registration and registration.status == option %}selected{% endif %}>{{ option }}</option>
+                  <option value="{{ option }}" {% if registration and ((option == 'Other' and registration.status_is_other) or registration.status == option) %}selected{% endif %}>{{ option }}</option>
                 {% endfor %}
               </select>
             </label>
@@ -581,6 +583,7 @@
     const campusSelect = form.querySelector('select[name="campus"]');
     const campusOtherWrap = document.getElementById('campusOtherWrap');
     const campusOtherInput = document.getElementById('campusOtherInput');
+    const firstRetreatQuestion = document.getElementById('firstRetreatQuestion');
     const attendedBeforeFields = Array.from(form.querySelectorAll('input[name="attended_before"]'));
     const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
 
@@ -635,7 +638,13 @@
     }
 
     function isFullTimer() {
-      return statusSelect.value === 'Other' && /full[\s-]*timer/i.test(statusOtherInput.value.trim());
+      if (statusSelect.value !== 'Other') return false;
+      const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
+    }
+
+    function isOtherStatus() {
+      return statusSelect.value === 'Other';
     }
 
     function isCcsu() {
@@ -742,12 +751,15 @@
 
     function updatePaymentRequirements() {
       const paymentRequired = !paymentNotRequired();
+      const attendanceRequired = paymentRequired && !isOtherStatus();
       paymentOptionFields.forEach((field) => {
         field.required = paymentRequired;
       });
       attendedBeforeFields.forEach((field) => {
-        field.required = paymentRequired;
+        field.required = attendanceRequired;
+        if (!attendanceRequired) field.checked = false;
       });
+      firstRetreatQuestion.hidden = !attendanceRequired;
       updateStep();
     }
 
