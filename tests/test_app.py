@@ -100,6 +100,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn('Enter a valid email address, like name@example.com.', html)
         self.assertIn('id="phoneError" class="fieldError"', html)
         self.assertIn('Enter exactly 10 digits without a country code.', html)
+        phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
+        self.assertNotIn('maxlength=', phone_input)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
