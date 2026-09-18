@@ -100,6 +100,7 @@ class RouteTests(unittest.TestCase):
         self.assertIn('id="phoneError" class="fieldError"', html)
         self.assertIn("return 'Enter a valid email'", html)
         self.assertIn("return 'Remove the +1 country code'", html)
+        self.assertIn("return 'Remove the leading 1'", html)
         self.assertIn("return 'Remove the + sign and country code'", html)
         self.assertIn("return 'Use numbers only'", html)
         self.assertIn('return `Add ${difference} more digit', html)

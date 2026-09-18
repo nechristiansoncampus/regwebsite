@@ -654,7 +654,8 @@
       if (!field.value.trim()) return 'Required';
       if (field === emailInput && field.validity.typeMismatch) return 'Enter a valid email';
       if (field === phoneInput) {
-        if (/^\+?1[0-9]{10}$/.test(field.value)) return 'Remove the +1 country code';
+        if (/^\+1[0-9]{10}$/.test(field.value)) return 'Remove the +1 country code';
+        if (/^1[0-9]{10}$/.test(field.value)) return 'Remove the leading 1';
         if (field.value.startsWith('+')) return 'Remove the + sign and country code';
         if (/[^0-9]/.test(field.value)) return 'Use numbers only';
         const difference = 10 - field.value.length;
