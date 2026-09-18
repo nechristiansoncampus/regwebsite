@@ -183,6 +183,24 @@
       color:rgba(36,22,11,.74);
     }
 
+    .fieldLabelRow{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:4px 8px;
+    }
+
+    .fieldError{
+      margin-left:auto;
+      color:var(--danger);
+      font-size:12px;
+      font-weight:600;
+      line-height:1.3;
+    }
+
+    .fieldError[hidden]{ display:none; }
+
     .optional{
       color:rgba(36,22,11,.46);
       font-weight:700;
@@ -208,6 +226,11 @@
       font-size:16px;
       font-weight:400;
       box-shadow:0 1px 0 rgba(255,255,255,.65) inset;
+    }
+
+    input.hasError{
+      border-color:rgba(153,27,27,.62);
+      box-shadow:0 0 0 3px rgba(153,27,27,.10);
     }
 
     select,
@@ -400,13 +423,19 @@
         <div class="formPage isActive" data-page="1">
           <div class="grid two">
             <label>
-              Email *
-              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="{{ registration.email if registration else '' }}" required>
+              <span class="fieldLabelRow">
+                <span>Email *</span>
+                <span id="emailError" class="fieldError" role="alert" hidden></span>
+              </span>
+              <input id="emailInput" type="email" name="email" autocomplete="email" placeholder="you@example.com" aria-describedby="emailError" value="{{ registration.email if registration else '' }}" required>
             </label>
 
             <label>
-              Phone Number *
-              <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits without a country code." placeholder="5551234567" value="{{ registration.phone if registration else '' }}" required>
+              <span class="fieldLabelRow">
+                <span>Phone Number *</span>
+                <span id="phoneError" class="fieldError" role="alert" hidden></span>
+              </span>
+              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
             </label>
           </div>
 
@@ -568,6 +597,10 @@
     const stepFill = document.getElementById('stepFill');
     const sectionTitle = document.getElementById('sectionTitle');
     const sectionHint = document.getElementById('sectionHint');
+    const emailInput = document.getElementById('emailInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const emailError = document.getElementById('emailError');
+    const phoneError = document.getElementById('phoneError');
     const backButton = document.getElementById('backButton');
     const nextButton = document.getElementById('nextButton');
     const submitButton = document.getElementById('submitButton');
@@ -617,11 +650,31 @@
         .filter((field) => !field.disabled && field.offsetParent !== null);
     }
 
+    function contactError(field) {
+      if (!field.value.trim()) return 'Required';
+      if (field === emailInput && field.validity.typeMismatch) return 'Enter a valid email';
+      if (field === phoneInput && !/^[0-9]{10}$/.test(field.value)) return 'Use exactly 10 digits';
+      return '';
+    }
+
+    function updateContactFeedback(field, feedback, showError) {
+      const message = contactError(field);
+      const visible = showError && Boolean(message);
+      feedback.textContent = visible ? message : '';
+      feedback.hidden = !visible;
+      field.classList.toggle('hasError', visible);
+      field.setAttribute('aria-invalid', String(visible));
+    }
+
     function validatePage(index) {
       const fields = visibleFields(pages[index]);
+      if (fields.includes(emailInput)) updateContactFeedback(emailInput, emailError, true);
+      if (fields.includes(phoneInput)) updateContactFeedback(phoneInput, phoneError, true);
       for (const field of fields) {
         if (!field.checkValidity()) {
-          field.reportValidity();
+          if (field !== emailInput && field !== phoneInput) field.reportValidity();
+          field.focus({ preventScroll: true });
+          field.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return false;
         }
       }
@@ -790,6 +843,13 @@
 
     statusOtherInput.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
+
+    [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
+      field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
+      field.addEventListener('input', () => {
+        if (!feedback.hidden) updateContactFeedback(field, feedback, true);
+      });
+    });
 
     form.addEventListener('submit', (event) => {
       if (!validatePage(currentPage)) {

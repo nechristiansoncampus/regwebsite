@@ -94,14 +94,14 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
-    def test_contact_fields_use_native_validation_tooltips(self):
+    def test_contact_fields_use_compact_inline_validation(self):
         html = self.client.get('/register').get_data(as_text=True)
-        email_input = html.split('name="email"', 1)[1].split('>', 1)[0]
-        phone_input = html.split('name="phone"', 1)[1].split('>', 1)[0]
-        self.assertIn('<input type="email" name="email"', html)
-        self.assertIn('required', email_input)
+        self.assertIn('id="emailError" class="fieldError"', html)
+        self.assertIn('id="phoneError" class="fieldError"', html)
+        self.assertIn("return 'Enter a valid email'", html)
+        self.assertIn("return 'Use exactly 10 digits'", html)
+        phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
         self.assertIn('pattern="[0-9]{10}"', phone_input)
-        self.assertIn('title="Enter exactly 10 digits without a country code."', phone_input)
         self.assertNotIn('maxlength=', phone_input)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
