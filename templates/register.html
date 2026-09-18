@@ -657,6 +657,7 @@
         if (/^\+1[0-9]{10}$/.test(field.value)) return 'Remove the +1 country code';
         if (/^1[0-9]{10}$/.test(field.value)) return 'Remove the leading 1';
         if (field.value.startsWith('+')) return 'Remove the + sign and country code';
+        if (/[\s().-]/.test(field.value)) return 'Remove spaces, dashes, and parentheses';
         if (/[^0-9]/.test(field.value)) return 'Use numbers only';
         const difference = 10 - field.value.length;
         if (difference > 0) return `Add ${difference} more digit${difference === 1 ? '' : 's'}`;
@@ -666,10 +667,6 @@
         }
       }
       return '';
-    }
-
-    function normalizePhoneFormatting() {
-      phoneInput.value = phoneInput.value.replace(/[\s().-]+/g, '');
     }
 
     function updateContactFeedback(field, feedback, showError) {
@@ -862,7 +859,6 @@
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
       field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
       field.addEventListener('input', () => {
-        if (field === phoneInput) normalizePhoneFormatting();
         if (!feedback.hidden) updateContactFeedback(field, feedback, true);
       });
     });

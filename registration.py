@@ -9,12 +9,11 @@ EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 def parse_registration(form):
     status_selection = form.get('status', '').strip()
-    phone = re.sub(r'[\s().-]+', '', form.get('phone', '').strip())
     registration = {
         'email': form.get('email', '').strip(),
         'first_name': form.get('first_name', '').strip(),
         'last_name': form.get('last_name', '').strip(),
-        'phone': phone,
+        'phone': form.get('phone', '').strip(),
         'gender': form.get('gender', '').strip(),
         'campus': form.get('campus', '').strip(),
         'campus_other': form.get('campus_other', '').strip(),

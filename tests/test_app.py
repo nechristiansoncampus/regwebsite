@@ -102,10 +102,10 @@ class RouteTests(unittest.TestCase):
         self.assertIn("return 'Remove the +1 country code'", html)
         self.assertIn("return 'Remove the leading 1'", html)
         self.assertIn("return 'Remove the + sign and country code'", html)
+        self.assertIn("return 'Remove spaces, dashes, and parentheses'", html)
         self.assertIn("return 'Use numbers only'", html)
         self.assertIn('return `Add ${difference} more digit', html)
         self.assertIn('return `Remove ${extra} digit', html)
-        self.assertIn("replace(/[\\s().-]+/g, '')", html)
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
         self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
@@ -259,11 +259,11 @@ class RouteTests(unittest.TestCase):
 
 
 class RegistrationRuleTests(unittest.TestCase):
-    def test_phone_formatting_is_normalized(self):
+    def test_phone_formatting_is_rejected(self):
         parsed = registration.parse_registration(
             registration_data(phone='(555) 123-4567')
         )
-        self.assertEqual(parsed['phone'], '5551234567')
+        self.assertIn('10-digit phone number', registration.validate_registration(parsed))
 
     def test_phone_rejects_letters_and_country_codes(self):
         for phone in ['call5551234567', '+15551234567', '15551234567']:
