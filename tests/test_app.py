@@ -94,6 +94,20 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
+    def test_contact_fields_include_inline_validation_feedback(self):
+        html = self.client.get('/register').get_data(as_text=True)
+        self.assertIn('id="emailError" class="fieldError"', html)
+        self.assertIn('Enter a valid email address, like name@example.com.', html)
+        self.assertIn('id="phoneError" class="fieldError"', html)
+        self.assertIn('Enter exactly 10 digits without a country code.', html)
+
+    def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
+        html = self.client.get('/').get_data(as_text=True)
+        self.assertIn('games, outdoor activities, and snacks.', html)
+        self.assertNotIn('games, snow, and snacks.', html)
+        self.assertIn('What to Expect', html)
+        self.assertIn('What People Are Saying About Retreat', html)
+
     def test_required_fields_are_validated(self):
         response = self.client.post('/register', data=registration_data(email=''))
         self.assertIn(b'Please fill out every field.', response.data)

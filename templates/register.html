@@ -196,6 +196,15 @@
       min-height:17px;
     }
 
+    .fieldError{
+      color:var(--danger);
+      font-size:12px;
+      font-weight:400;
+      line-height:1.4;
+    }
+
+    .fieldError[hidden]{ display:none; }
+
     input, select, textarea{
       width:100%;
       min-height:48px;
@@ -208,6 +217,11 @@
       font-size:16px;
       font-weight:400;
       box-shadow:0 1px 0 rgba(255,255,255,.65) inset;
+    }
+
+    input.hasError{
+      border-color:rgba(153,27,27,.62);
+      box-shadow:0 0 0 3px rgba(153,27,27,.10);
     }
 
     select,
@@ -401,12 +415,14 @@
           <div class="grid two">
             <label>
               Email *
-              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="{{ registration.email if registration else '' }}" required>
+              <input id="emailInput" type="email" name="email" autocomplete="email" placeholder="you@example.com" aria-describedby="emailError" value="{{ registration.email if registration else '' }}" required>
+              <span id="emailError" class="fieldError" role="alert" hidden></span>
             </label>
 
             <label>
               Phone Number *
-              <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" value="{{ registration.phone if registration else '' }}" required>
+              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
+              <span id="phoneError" class="fieldError" role="alert" hidden></span>
             </label>
           </div>
 
@@ -568,6 +584,10 @@
     const stepFill = document.getElementById('stepFill');
     const sectionTitle = document.getElementById('sectionTitle');
     const sectionHint = document.getElementById('sectionHint');
+    const emailInput = document.getElementById('emailInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const emailError = document.getElementById('emailError');
+    const phoneError = document.getElementById('phoneError');
     const backButton = document.getElementById('backButton');
     const nextButton = document.getElementById('nextButton');
     const submitButton = document.getElementById('submitButton');
@@ -617,8 +637,32 @@
         .filter((field) => !field.disabled && field.offsetParent !== null);
     }
 
+    function updateContactFeedback(field, feedback, showError) {
+      field.setCustomValidity('');
+      let message = '';
+
+      if (!field.value.trim()) {
+        message = field === emailInput
+          ? 'Enter your email address.'
+          : 'Enter your phone number.';
+      } else if (field === emailInput && field.validity.typeMismatch) {
+        message = 'Enter a valid email address, like name@example.com.';
+      } else if (field === phoneInput && !/^[0-9]{10}$/.test(field.value)) {
+        message = 'Enter exactly 10 digits without a country code.';
+      }
+
+      field.setCustomValidity(message);
+      const visible = showError && Boolean(message);
+      feedback.textContent = visible ? message : '';
+      feedback.hidden = !visible;
+      field.classList.toggle('hasError', visible);
+      field.setAttribute('aria-invalid', String(visible));
+    }
+
     function validatePage(index) {
       const fields = visibleFields(pages[index]);
+      if (fields.includes(emailInput)) updateContactFeedback(emailInput, emailError, true);
+      if (fields.includes(phoneInput)) updateContactFeedback(phoneInput, phoneError, true);
       for (const field of fields) {
         if (!field.checkValidity()) {
           field.reportValidity();
@@ -790,6 +834,16 @@
 
     statusOtherInput.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
+
+    [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
+      field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
+      field.addEventListener('input', () => {
+        const wasVisible = !feedback.hidden;
+        updateContactFeedback(field, feedback, wasVisible);
+      });
+      field.addEventListener('invalid', () => updateContactFeedback(field, feedback, true));
+      updateContactFeedback(field, feedback, false);
+    });
 
     form.addEventListener('submit', (event) => {
       if (!validatePage(currentPage)) {
