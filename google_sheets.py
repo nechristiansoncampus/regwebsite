@@ -33,6 +33,7 @@ REGISTRATION_HEADERS = [
     'PayPal Capture ID',
     'Paid At',
     'Late Fee',
+    'Promo Code',
 ]
 
 
@@ -117,6 +118,7 @@ def record_registration(registration, registration_id):
         registration.get('paypal_capture_id', ''),
         registration.get('paid_at', ''),
         registration.get('late_fee', ''),
+        registration.get('promo_code', ''),
     ], start='A1')
 
 

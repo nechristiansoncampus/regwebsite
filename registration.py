@@ -1,5 +1,6 @@
 import os
 import re
+import hmac
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 
@@ -26,6 +27,7 @@ def parse_registration(form):
         'transportation_other': form.get('transportation_other', '').strip(),
         'car_capacity': form.get('car_capacity', '').strip(),
         'payment_option': form.get('payment_option', '').strip(),
+        'promo_code': form.get('promo_code', '').strip(),
         'attended_before': form.get('attended_before', '').strip(),
         'allergies': form.get('allergies', '').strip(),
         'comments': form.get('comments', '').strip(),
@@ -65,6 +67,9 @@ def validate_registration(registration):
             and not registration['car_capacity']
         ):
             return 'Please fill out every field.'
+
+    if registration.get('promo_code') and not has_payment_waiver_code(registration):
+        return 'That promo code is not valid.'
 
     if not payment_not_required(registration):
         if registration['payment_option'] not in ['scholarship', 'pay_full']:
@@ -133,12 +138,13 @@ def is_other_status(registration):
     return registration.get('status_is_other', False) or registration.get('status') == 'Other'
 
 
-def is_full_timer(registration):
-    if not is_other_status(registration):
-        return False
-    status = registration.get('status_other') or registration.get('status', '')
-    compact_status = re.sub(r'[^a-z0-9]+', '', status.casefold())
-    return compact_status in {'ft', 'fulltime', 'fulltimer'}
+def has_payment_waiver_code(registration):
+    promo_code = registration.get('promo_code', '').strip().casefold()
+    configured_code = os.environ.get('RETREAT_PAYMENT_WAIVER_CODE', 'GBA-FT').strip().casefold()
+    return bool(promo_code and configured_code) and hmac.compare_digest(
+        promo_code,
+        configured_code,
+    )
 
 
 def is_ccsu(registration):
@@ -150,7 +156,7 @@ def is_ccsu(registration):
 
 
 def payment_not_required(registration):
-    return is_ccsu(registration) or is_full_timer(registration)
+    return is_ccsu(registration) or has_payment_waiver_code(registration)
 
 
 def initial_payment_status(registration):

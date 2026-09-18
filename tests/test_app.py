@@ -26,6 +26,7 @@ def registration_data(**overrides):
         'transportation_other': '',
         'car_capacity': '',
         'payment_option': 'pay_full',
+        'promo_code': '',
         'attended_before': 'yes',
         'allergies': '',
         'comments': '',
@@ -180,8 +181,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
-    def test_full_timer_finishes_without_payment(self):
-        for status in ['full-timer', 'Full Timer', 'fulltimer', 'full time', 'FT', 'F.T.', 'F/T']:
+    def test_full_timer_status_does_not_skip_payment(self):
+        for status in ['full-timer', 'Full Timer', 'FT']:
             with self.subTest(status=status):
                 response = self.client.post(
                     '/register',
@@ -192,7 +193,37 @@ class RouteTests(unittest.TestCase):
                         attended_before='',
                     ),
                 )
-                self.assertIn(b'No payment is required.', response.data)
+                self.assertIn(b'Please choose a payment option.', response.data)
+
+    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
+    def test_valid_promo_code_finishes_without_payment(self):
+        response = self.client.post(
+            '/register',
+            data=registration_data(
+                status='Other',
+                status_other='Full Timer',
+                payment_option='',
+                attended_before='',
+                promo_code='gba-ft',
+            ),
+        )
+
+        self.assertIn(b'No payment is required.', response.data)
+        recorded = self.record_registration.call_args.args[0]
+        self.assertEqual(recorded['promo_code'], 'gba-ft')
+        self.assertEqual(recorded['payment_option'], 'not_required')
+
+    def test_invalid_promo_code_has_specific_error(self):
+        response = self.client.post(
+            '/register',
+            data=registration_data(
+                payment_option='',
+                attended_before='',
+                promo_code='NOT-A-CODE',
+            ),
+        )
+        self.assertIn(b'That promo code is not valid.', response.data)
+        self.record_registration.assert_not_called()
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_other_status_skips_attendance_question_without_discount(self):
@@ -276,13 +307,10 @@ class RegistrationRuleTests(unittest.TestCase):
             with self.subTest(campus=campus):
                 self.assertFalse(registration.is_ccsu({'campus': campus}))
 
-    def test_ft_matching_does_not_match_full_time_student(self):
-        self.assertFalse(registration.is_full_timer({'status': 'full-time student'}))
-        self.assertFalse(registration.is_full_timer({'status': 'FT student'}))
-        self.assertFalse(registration.is_full_timer({
-            'status': 'Senior',
-            'status_other': 'FT',
-        }))
+    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
+    def test_payment_waiver_code_is_case_insensitive(self):
+        self.assertTrue(registration.has_payment_waiver_code({'promo_code': 'gba-ft'}))
+        self.assertFalse(registration.has_payment_waiver_code({'promo_code': 'wrong'}))
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):

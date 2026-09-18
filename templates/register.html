@@ -564,6 +564,11 @@
               </label>
             </div>
 
+            <label>
+              Promo Code <span class="optional">optional</span>
+              <input id="promoCodeInput" name="promo_code" autocomplete="off" autocapitalize="characters" spellcheck="false" value="{{ registration.promo_code if registration else '' }}">
+            </label>
+
             <div id="firstRetreatQuestion" class="followUpQuestion">
               <div class="choiceLabel">Have you joined us for a retreat before? *</div>
               <div class="stateChoices">
@@ -619,6 +624,7 @@
     const firstRetreatQuestion = document.getElementById('firstRetreatQuestion');
     const attendedBeforeFields = Array.from(form.querySelectorAll('input[name="attended_before"]'));
     const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
+    const promoCodeInput = document.getElementById('promoCodeInput');
 
     let currentPage = 0;
 
@@ -702,12 +708,6 @@
       return selectedSchoolState() === 'Massachusetts';
     }
 
-    function isFullTimer() {
-      if (statusSelect.value !== 'Other') return false;
-      const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
-      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
-    }
-
     function isOtherStatus() {
       return statusSelect.value === 'Other';
     }
@@ -722,7 +722,11 @@
     }
 
     function paymentNotRequired() {
-      return isCcsu() || isFullTimer();
+      return isCcsu();
+    }
+
+    function promoCodeEntered() {
+      return Boolean(promoCodeInput.value.trim());
     }
 
     function activePages() {
@@ -775,7 +779,9 @@
       backButton.hidden = currentPage === 0;
       nextButton.hidden = isLastActivePage();
       submitButton.hidden = !isLastActivePage();
-      submitButton.textContent = paymentNotRequired() ? 'Complete Registration' : 'Continue to Checkout';
+      submitButton.textContent = paymentNotRequired() || promoCodeEntered()
+        ? 'Complete Registration'
+        : 'Continue to Checkout';
     }
 
     function updateStateFlow() {
@@ -815,7 +821,7 @@
     }
 
     function updatePaymentRequirements() {
-      const paymentRequired = !paymentNotRequired();
+      const paymentRequired = !paymentNotRequired() && !promoCodeEntered();
       const attendanceRequired = paymentRequired && !isOtherStatus();
       paymentOptionFields.forEach((field) => {
         field.required = paymentRequired;
@@ -855,6 +861,7 @@
 
     statusOtherInput.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
+    promoCodeInput.addEventListener('input', updatePaymentRequirements);
 
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
       field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
