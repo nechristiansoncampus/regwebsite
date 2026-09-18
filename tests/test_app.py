@@ -99,7 +99,12 @@ class RouteTests(unittest.TestCase):
         self.assertIn('id="emailError" class="fieldError"', html)
         self.assertIn('id="phoneError" class="fieldError"', html)
         self.assertIn("return 'Enter a valid email'", html)
-        self.assertIn("return 'Use exactly 10 digits'", html)
+        self.assertIn("return 'Remove the +1 country code'", html)
+        self.assertIn("return 'Remove the + sign and country code'", html)
+        self.assertIn("return 'Use numbers only'", html)
+        self.assertIn('return `Add ${difference} more digit', html)
+        self.assertIn('return `Remove ${extra} digit', html)
+        self.assertIn("replace(/[\\s().-]+/g, '')", html)
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
         self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
@@ -253,6 +258,18 @@ class RouteTests(unittest.TestCase):
 
 
 class RegistrationRuleTests(unittest.TestCase):
+    def test_phone_formatting_is_normalized(self):
+        parsed = registration.parse_registration(
+            registration_data(phone='(555) 123-4567')
+        )
+        self.assertEqual(parsed['phone'], '5551234567')
+
+    def test_phone_rejects_letters_and_country_codes(self):
+        for phone in ['call5551234567', '+15551234567', '15551234567']:
+            with self.subTest(phone=phone):
+                parsed = registration.parse_registration(registration_data(phone=phone))
+                self.assertIn('10-digit phone number', registration.validate_registration(parsed))
+
     def test_ccsu_matching_does_not_match_other_connecticut_schools(self):
         for campus in ['UConn', 'Connecticut College', 'Eastern Connecticut State University']:
             with self.subTest(campus=campus):

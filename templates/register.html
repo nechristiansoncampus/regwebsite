@@ -653,8 +653,22 @@
     function contactError(field) {
       if (!field.value.trim()) return 'Required';
       if (field === emailInput && field.validity.typeMismatch) return 'Enter a valid email';
-      if (field === phoneInput && !/^[0-9]{10}$/.test(field.value)) return 'Use exactly 10 digits';
+      if (field === phoneInput) {
+        if (/^\+?1[0-9]{10}$/.test(field.value)) return 'Remove the +1 country code';
+        if (field.value.startsWith('+')) return 'Remove the + sign and country code';
+        if (/[^0-9]/.test(field.value)) return 'Use numbers only';
+        const difference = 10 - field.value.length;
+        if (difference > 0) return `Add ${difference} more digit${difference === 1 ? '' : 's'}`;
+        if (difference < 0) {
+          const extra = Math.abs(difference);
+          return `Remove ${extra} digit${extra === 1 ? '' : 's'}`;
+        }
+      }
       return '';
+    }
+
+    function normalizePhoneFormatting() {
+      phoneInput.value = phoneInput.value.replace(/[\s().-]+/g, '');
     }
 
     function updateContactFeedback(field, feedback, showError) {
@@ -847,6 +861,7 @@
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
       field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
       field.addEventListener('input', () => {
+        if (field === phoneInput) normalizePhoneFormatting();
         if (!feedback.hidden) updateContactFeedback(field, feedback, true);
       });
     });

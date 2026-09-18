@@ -9,11 +9,12 @@ EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 def parse_registration(form):
     status_selection = form.get('status', '').strip()
+    phone = re.sub(r'[\s().-]+', '', form.get('phone', '').strip())
     registration = {
         'email': form.get('email', '').strip(),
         'first_name': form.get('first_name', '').strip(),
         'last_name': form.get('last_name', '').strip(),
-        'phone': form.get('phone', '').strip(),
+        'phone': phone,
         'gender': form.get('gender', '').strip(),
         'campus': form.get('campus', '').strip(),
         'campus_other': form.get('campus_other', '').strip(),
@@ -52,8 +53,7 @@ def validate_registration(registration):
     if not EMAIL_PATTERN.match(registration['email']):
         return 'Please enter a valid email address.'
 
-    phone_digits = re.sub(r'\D', '', registration['phone'])
-    if registration['phone'].startswith('+') or len(phone_digits) != 10:
+    if not re.fullmatch(r'\d{10}', registration['phone']):
         return 'Please enter a 10-digit phone number without a country code.'
 
     if registration['school_state'] == 'Massachusetts':
