@@ -94,14 +94,16 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
-    def test_contact_fields_include_inline_validation_feedback(self):
+    def test_contact_fields_use_native_validation_with_format_hints(self):
         html = self.client.get('/register').get_data(as_text=True)
-        self.assertIn('id="emailError" class="fieldError"', html)
-        self.assertIn('Enter a valid email address, like name@example.com.', html)
-        self.assertIn('id="phoneError" class="fieldError"', html)
-        self.assertIn('Enter exactly 10 digits without a country code.', html)
-        phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
+        self.assertIn('id="emailFormat" class="fieldHint"', html)
+        self.assertIn('Use a valid email address.', html)
+        self.assertIn('id="phoneFormat" class="fieldHint"', html)
+        self.assertIn('10 digits, numbers only.', html)
+        phone_input = html.split('name="phone"', 1)[1].split('>', 1)[0]
+        self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
+        self.assertNotIn('class="fieldError"', html)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
