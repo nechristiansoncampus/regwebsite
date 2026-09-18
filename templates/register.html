@@ -401,14 +401,12 @@
           <div class="grid two">
             <label>
               Email *
-              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" aria-describedby="emailFormat" value="{{ registration.email if registration else '' }}" required>
-              <span id="emailFormat" class="fieldHint">Use a valid email address.</span>
+              <input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="{{ registration.email if registration else '' }}" required>
             </label>
 
             <label>
               Phone Number *
-              <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" aria-describedby="phoneFormat" value="{{ registration.phone if registration else '' }}" required>
-              <span id="phoneFormat" class="fieldHint">10 digits, numbers only.</span>
+              <input type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits without a country code." placeholder="5551234567" value="{{ registration.phone if registration else '' }}" required>
             </label>
           </div>
 
