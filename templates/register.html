@@ -197,13 +197,17 @@
     }
 
     .fieldError{
+      min-height:17px;
       color:var(--danger);
       font-size:12px;
       font-weight:400;
       line-height:1.4;
     }
 
-    .fieldError[hidden]{ display:none; }
+    .fieldError[hidden]{
+      display:block;
+      visibility:hidden;
+    }
 
     input, select, textarea{
       width:100%;
@@ -421,7 +425,7 @@
 
             <label>
               Phone Number *
-              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
+              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
               <span id="phoneError" class="fieldError" role="alert" hidden></span>
             </label>
           </div>
