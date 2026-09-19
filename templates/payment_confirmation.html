@@ -58,6 +58,27 @@
       font-size:15px;
     }
 
+    .summary{
+      display:grid;
+      gap:10px;
+      margin:22px 0 0;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.52);
+      text-align:left;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      line-height:1.4;
+    }
+
+    .row span:first-child{ color:var(--muted); }
+    .row span:last-child{ text-align:right; font-weight:400; }
+
     .homeLink{
       display:inline-flex;
       align-items:center;
@@ -83,6 +104,7 @@
       You should receive a confirmation email shortly. If you don’t receive it, please contact
       <a href="mailto:nechristiansoncampus@gmail.com">nechristiansoncampus@gmail.com</a>.
     </p>
+    {% include '_registration_summary.html' %}
     <a class="homeLink" href="/">Back to home</a>
   </main>
 </body>
