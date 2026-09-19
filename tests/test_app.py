@@ -460,9 +460,9 @@ class SheetTests(unittest.TestCase):
                 google_sheets.update_registration_payment('missing-id', **{'Payment Status': 'Paid'})
 
     @patch.dict(os.environ, {'APP_ENV': 'development'}, clear=False)
-    def test_non_production_opens_test_spreadsheet(self):
-        os.environ.pop('REGISTRATION_TEST_SPREADSHEET_ID', None)
-        os.environ.pop('REGISTRATION_TEST_SPREADSHEET', None)
+    def test_non_production_opens_test_worksheet(self):
+        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET', None)
         os.environ.pop('REGISTRATION_TEST_WORKSHEET', None)
         worksheet = Mock()
         worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
@@ -476,9 +476,9 @@ class SheetTests(unittest.TestCase):
 
         self.assertIs(result, worksheet)
         sheets_client.open.assert_called_once_with(
-            '2026 Fall Retreat - Registration (Test Responses)'
+            '2026 Fall Retreat - Registration (Responses)'
         )
-        spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
+        spreadsheet.worksheet_by_title.assert_called_once_with('Test Registrations')
 
     @patch.dict(os.environ, {'APP_ENV': 'production'}, clear=False)
     def test_production_opens_live_spreadsheet(self):
@@ -511,16 +511,18 @@ class SheetTests(unittest.TestCase):
             settings['spreadsheet_title'],
             '2026 Fall Retreat - Registration (Responses)',
         )
+        self.assertEqual(settings['worksheet_title'], 'Registrations')
 
     @patch.dict(
         os.environ,
         {
             'APP_ENV': 'staging',
-            'REGISTRATION_TEST_SPREADSHEET_ID': 'test-sheet-id',
+            'REGISTRATION_SPREADSHEET_ID': 'shared-spreadsheet-id',
+            'REGISTRATION_TEST_WORKSHEET': 'Staging Registrations',
         },
         clear=False,
     )
-    def test_non_production_prefers_test_spreadsheet_id(self):
+    def test_non_production_uses_shared_spreadsheet_id_and_test_worksheet(self):
         worksheet = Mock()
         worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         spreadsheet = Mock()
@@ -531,7 +533,8 @@ class SheetTests(unittest.TestCase):
         with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
             google_sheets.registration_worksheet()
 
-        sheets_client.open_by_key.assert_called_once_with('test-sheet-id')
+        sheets_client.open_by_key.assert_called_once_with('shared-spreadsheet-id')
+        spreadsheet.worksheet_by_title.assert_called_once_with('Staging Registrations')
 
     def test_sheet_adds_new_columns_to_existing_valid_headers(self):
         worksheet = Mock()

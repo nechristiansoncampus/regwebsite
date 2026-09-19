@@ -43,25 +43,16 @@ def registration_sheet_settings():
         if app_env
         else bool(os.environ.get('RENDER'))
     )
-    if is_production:
-        return {
-            'spreadsheet_id': os.environ.get('REGISTRATION_SPREADSHEET_ID'),
-            'spreadsheet_title': os.environ.get(
-                'REGISTRATION_SPREADSHEET',
-                '2026 Fall Retreat - Registration (Responses)',
-            ),
-            'worksheet_title': os.environ.get('REGISTRATION_WORKSHEET', 'Registrations'),
-        }
-
     return {
-        'spreadsheet_id': os.environ.get('REGISTRATION_TEST_SPREADSHEET_ID'),
+        'spreadsheet_id': os.environ.get('REGISTRATION_SPREADSHEET_ID'),
         'spreadsheet_title': os.environ.get(
-            'REGISTRATION_TEST_SPREADSHEET',
-            '2026 Fall Retreat - Registration (Test Responses)',
+            'REGISTRATION_SPREADSHEET',
+            '2026 Fall Retreat - Registration (Responses)',
         ),
-        'worksheet_title': os.environ.get(
-            'REGISTRATION_TEST_WORKSHEET',
-            'Registrations',
+        'worksheet_title': (
+            os.environ.get('REGISTRATION_WORKSHEET', 'Registrations')
+            if is_production
+            else os.environ.get('REGISTRATION_TEST_WORKSHEET', 'Test Registrations')
         ),
     }
 
