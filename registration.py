@@ -52,8 +52,7 @@ def validate_registration(registration):
     if not EMAIL_PATTERN.match(registration['email']):
         return 'Please enter a valid email address.'
 
-    phone_digits = re.sub(r'\D', '', registration['phone'])
-    if registration['phone'].startswith('+') or len(phone_digits) != 10:
+    if not re.fullmatch(r'\d{10}', registration['phone']):
         return 'Please enter a 10-digit phone number without a country code.'
 
     if registration['school_state'] == 'Massachusetts':
@@ -151,7 +150,11 @@ def is_ccsu(registration):
 
 
 def payment_not_required(registration):
-    return is_ccsu(registration) or is_full_timer(registration)
+    is_eligible_full_timer = (
+        registration.get('school_state') in {'Massachusetts', 'New Hampshire'}
+        and is_full_timer(registration)
+    )
+    return is_ccsu(registration) or is_eligible_full_timer
 
 
 def initial_payment_status(registration):

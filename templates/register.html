@@ -183,6 +183,33 @@
       color:rgba(36,22,11,.74);
     }
 
+    .fieldLabelRow{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:4px 8px;
+    }
+
+    .fieldError{
+      margin-left:auto;
+      color:var(--danger);
+      font-size:12px;
+      font-weight:600;
+      line-height:1.3;
+    }
+
+    .fieldError[hidden]{ display:none; }
+
+    @media (min-width: 720px){
+      .fieldLabelRow{ flex-wrap:nowrap; }
+      .fieldError{
+        min-width:0;
+        text-align:right;
+        white-space:nowrap;
+      }
+    }
+
     .optional{
       color:rgba(36,22,11,.46);
       font-weight:700;
@@ -194,19 +221,6 @@
       font-weight:400;
       line-height:1.4;
       min-height:17px;
-    }
-
-    .fieldError{
-      min-height:17px;
-      color:var(--danger);
-      font-size:12px;
-      font-weight:400;
-      line-height:1.4;
-    }
-
-    .fieldError[hidden]{
-      display:block;
-      visibility:hidden;
     }
 
     input, select, textarea{
@@ -418,15 +432,19 @@
         <div class="formPage isActive" data-page="1">
           <div class="grid two">
             <label>
-              Email *
+              <span class="fieldLabelRow">
+                <span>Email *</span>
+                <span id="emailError" class="fieldError" role="alert" hidden></span>
+              </span>
               <input id="emailInput" type="email" name="email" autocomplete="email" placeholder="you@example.com" aria-describedby="emailError" value="{{ registration.email if registration else '' }}" required>
-              <span id="emailError" class="fieldError" role="alert" hidden></span>
             </label>
 
             <label>
-              Phone Number *
-              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" title="Enter a 10-digit phone number without a country code." placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
-              <span id="phoneError" class="fieldError" role="alert" hidden></span>
+              <span class="fieldLabelRow">
+                <span>Phone Number *</span>
+                <span id="phoneError" class="fieldError" role="alert" hidden></span>
+              </span>
+              <input id="phoneInput" type="tel" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" placeholder="5551234567" aria-describedby="phoneError" value="{{ registration.phone if registration else '' }}" required>
             </label>
           </div>
 
@@ -641,21 +659,27 @@
         .filter((field) => !field.disabled && field.offsetParent !== null);
     }
 
-    function updateContactFeedback(field, feedback, showError) {
-      field.setCustomValidity('');
-      let message = '';
-
-      if (!field.value.trim()) {
-        message = field === emailInput
-          ? 'Enter your email address.'
-          : 'Enter your phone number.';
-      } else if (field === emailInput && field.validity.typeMismatch) {
-        message = 'Enter a valid email address, like name@example.com.';
-      } else if (field === phoneInput && !/^[0-9]{10}$/.test(field.value)) {
-        message = 'Enter exactly 10 digits without a country code.';
+    function contactError(field) {
+      if (!field.value.trim()) return 'Required';
+      if (field === emailInput && field.validity.typeMismatch) return 'Enter a valid email';
+      if (field === phoneInput) {
+        if (/^\+1[0-9]{10}$/.test(field.value)) return 'Remove the +1 country code';
+        if (/^1[0-9]{10}$/.test(field.value)) return 'Remove the leading 1';
+        if (field.value.startsWith('+')) return 'Remove the + sign and country code';
+        if (/[\s().-]/.test(field.value)) return 'Remove spaces, dashes, and parentheses';
+        if (/[^0-9]/.test(field.value)) return 'Use numbers only';
+        const difference = 10 - field.value.length;
+        if (difference > 0) return `Add ${difference} more digit${difference === 1 ? '' : 's'}`;
+        if (difference < 0) {
+          const extra = Math.abs(difference);
+          return `Remove ${extra} digit${extra === 1 ? '' : 's'}`;
+        }
       }
+      return '';
+    }
 
-      field.setCustomValidity(message);
+    function updateContactFeedback(field, feedback, showError) {
+      const message = contactError(field);
       const visible = showError && Boolean(message);
       feedback.textContent = visible ? message : '';
       feedback.hidden = !visible;
@@ -669,7 +693,9 @@
       if (fields.includes(phoneInput)) updateContactFeedback(phoneInput, phoneError, true);
       for (const field of fields) {
         if (!field.checkValidity()) {
-          field.reportValidity();
+          if (field !== emailInput && field !== phoneInput) field.reportValidity();
+          field.focus({ preventScroll: true });
+          field.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return false;
         }
       }
@@ -685,12 +711,6 @@
       return selectedSchoolState() === 'Massachusetts';
     }
 
-    function isFullTimer() {
-      if (statusSelect.value !== 'Other') return false;
-      const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
-      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
-    }
-
     function isOtherStatus() {
       return statusSelect.value === 'Other';
     }
@@ -704,8 +724,15 @@
       return compactCampus === 'ccsu' || /\bcentral\s+(?:connecticut|conn|ct)\s+state(?:\s+(?:university|univ|college))?\b/.test(normalizedCampus);
     }
 
+    function isFullTimer() {
+      if (!isOtherStatus()) return false;
+      const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
+    }
+
     function paymentNotRequired() {
-      return isCcsu() || isFullTimer();
+      const fullTimerStates = ['Massachusetts', 'New Hampshire'];
+      return isCcsu() || (fullTimerStates.includes(selectedSchoolState()) && isFullTimer());
     }
 
     function activePages() {
@@ -758,7 +785,9 @@
       backButton.hidden = currentPage === 0;
       nextButton.hidden = isLastActivePage();
       submitButton.hidden = !isLastActivePage();
-      submitButton.textContent = paymentNotRequired() ? 'Complete Registration' : 'Continue to Checkout';
+      submitButton.textContent = paymentNotRequired()
+        ? 'Complete Registration'
+        : 'Continue to Checkout';
     }
 
     function updateStateFlow() {
@@ -769,7 +798,7 @@
       otherStateWrap.classList.toggle('isVisible', isOther);
       otherStateInput.required = isOther;
       updateTransportationRequirements();
-      updateStep();
+      updatePaymentRequirements();
     }
 
     function updateTransportationRequirements() {
@@ -794,6 +823,8 @@
       const isOther = statusSelect.value === 'Other';
       statusOtherWrap.classList.toggle('isVisible', isOther);
       statusOtherInput.required = isOther;
+      statusOtherInput.disabled = !isOther;
+      if (!isOther) statusOtherInput.value = '';
       updatePaymentRequirements();
     }
 
@@ -837,16 +868,14 @@
     });
 
     statusOtherInput.addEventListener('input', updateStatusOther);
+    statusSelect.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
 
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
       field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
       field.addEventListener('input', () => {
-        const wasVisible = !feedback.hidden;
-        updateContactFeedback(field, feedback, wasVisible);
+        if (!feedback.hidden) updateContactFeedback(field, feedback, true);
       });
-      field.addEventListener('invalid', () => updateContactFeedback(field, feedback, true));
-      updateContactFeedback(field, feedback, false);
     });
 
     form.addEventListener('submit', (event) => {

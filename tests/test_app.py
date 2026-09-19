@@ -94,14 +94,23 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
-    def test_contact_fields_include_inline_validation_feedback(self):
+    def test_contact_fields_use_compact_inline_validation(self):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('id="emailError" class="fieldError"', html)
-        self.assertIn('Enter a valid email address, like name@example.com.', html)
         self.assertIn('id="phoneError" class="fieldError"', html)
-        self.assertIn('Enter exactly 10 digits without a country code.', html)
+        self.assertIn("return 'Enter a valid email'", html)
+        self.assertIn("return 'Remove the +1 country code'", html)
+        self.assertIn("return 'Remove the leading 1'", html)
+        self.assertIn("return 'Remove the + sign and country code'", html)
+        self.assertIn("return 'Remove spaces, dashes, and parentheses'", html)
+        self.assertIn("return 'Use numbers only'", html)
+        self.assertIn('return `Add ${difference} more digit', html)
+        self.assertIn('return `Remove ${extra} digit', html)
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
+        self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
+        self.assertIn('.fieldLabelRow{ flex-wrap:nowrap; }', html)
+        self.assertIn('white-space:nowrap;', html)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
@@ -109,6 +118,8 @@ class RouteTests(unittest.TestCase):
         self.assertNotIn('games, snow, and snacks.', html)
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
+        self.assertIn('rgba(245,190,112,.88)', html)
+        self.assertIn('class="btn btnPrimary" href="/register"', html)
 
     def test_required_fields_are_validated(self):
         response = self.client.post('/register', data=registration_data(email=''))
@@ -173,19 +184,53 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
-    def test_full_timer_finishes_without_payment(self):
-        for status in ['full-timer', 'Full Timer', 'fulltimer', 'full time', 'FT', 'F.T.', 'F/T']:
-            with self.subTest(status=status):
+    def test_eligible_state_full_timer_status_skips_payment(self):
+        for state in ['Massachusetts', 'New Hampshire']:
+            for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
+                with self.subTest(state=state, status=status):
+                    transportation = 'I need a ride' if state == 'Massachusetts' else ''
+                    response = self.client.post(
+                        '/register',
+                        data=registration_data(
+                            school_state=state,
+                            status='Other',
+                            status_other=status,
+                            payment_option='',
+                            attended_before='',
+                            transportation=transportation,
+                        ),
+                    )
+                    self.assertIn(b'No payment is required.', response.data)
+                    recorded = self.record_registration.call_args.args[0]
+                    self.assertEqual(recorded['payment_option'], 'not_required')
+                    self.record_registration.reset_mock()
+
+    def test_full_timer_outside_eligible_states_still_pays(self):
+        for state in ['Connecticut', 'Rhode Island', 'Vermont']:
+            with self.subTest(state=state):
                 response = self.client.post(
                     '/register',
                     data=registration_data(
+                        school_state=state,
                         status='Other',
-                        status_other=status,
-                        payment_option='',
-                        attended_before='',
+                        status_other='FT',
                     ),
                 )
-                self.assertIn(b'No payment is required.', response.data)
+                self.assertIn(b'<h1>Checkout</h1>', response.data)
+                self.record_registration.assert_not_called()
+
+    def test_stale_full_timer_text_does_not_exempt_a_student_status(self):
+        response = self.client.post(
+            '/register',
+            data=registration_data(
+                school_state='New Hampshire',
+                status='Freshman',
+                status_other='FT',
+            ),
+        )
+
+        self.assertIn(b'<h1>Checkout</h1>', response.data)
+        self.record_registration.assert_not_called()
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_other_status_skips_attendance_question_without_discount(self):
@@ -252,17 +297,33 @@ class RouteTests(unittest.TestCase):
 
 
 class RegistrationRuleTests(unittest.TestCase):
+    def test_phone_formatting_is_rejected(self):
+        parsed = registration.parse_registration(
+            registration_data(phone='(555) 123-4567')
+        )
+        self.assertIn('10-digit phone number', registration.validate_registration(parsed))
+
+    def test_phone_rejects_letters_and_country_codes(self):
+        for phone in ['call5551234567', '+15551234567', '15551234567']:
+            with self.subTest(phone=phone):
+                parsed = registration.parse_registration(registration_data(phone=phone))
+                self.assertIn('10-digit phone number', registration.validate_registration(parsed))
+
     def test_ccsu_matching_does_not_match_other_connecticut_schools(self):
         for campus in ['UConn', 'Connecticut College', 'Eastern Connecticut State University']:
             with self.subTest(campus=campus):
                 self.assertFalse(registration.is_ccsu({'campus': campus}))
 
-    def test_ft_matching_does_not_match_full_time_student(self):
-        self.assertFalse(registration.is_full_timer({'status': 'full-time student'}))
-        self.assertFalse(registration.is_full_timer({'status': 'FT student'}))
+    def test_full_timer_status_matching_is_deliberately_narrow(self):
+        for status in ['FT', 'F/T', 'full-time', 'full timer', 'fulltimer']:
+            with self.subTest(status=status):
+                self.assertTrue(registration.is_full_timer({
+                    'status_is_other': True,
+                    'status_other': status,
+                }))
         self.assertFalse(registration.is_full_timer({
-            'status': 'Senior',
-            'status_other': 'FT',
+            'status_is_other': True,
+            'status_other': 'full-time student',
         }))
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)

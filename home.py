@@ -144,6 +144,7 @@ def checkout():
         late_fee=registration.get('late_fee', ''),
     )
 
+
 @app.route("/api/paypal/orders", methods=['post'])
 def create_paypal_order():
     registration = session.get('registration')
