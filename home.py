@@ -11,6 +11,8 @@ import pygsheets
 from google_sheets import record_registration
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
+    FULL_TIMER_STATES,
+    FULL_TIMER_STATUS_KEYS,
     is_ccsu,
     is_other_status,
     late_fee_amount,
@@ -48,7 +50,11 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-me')
 
 @app.context_processor
 def registration_config():
-    return {'registration_amount_display': registration_amount_display()}
+    return {
+        'registration_amount_display': registration_amount_display(),
+        'full_timer_states': sorted(FULL_TIMER_STATES),
+        'full_timer_status_keys': sorted(FULL_TIMER_STATUS_KEYS),
+    }
 
 
 @app.route("/", methods=['post', 'get'])

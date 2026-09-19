@@ -326,6 +326,16 @@ class RegistrationRuleTests(unittest.TestCase):
             'status_other': 'full-time student',
         }))
 
+    def test_full_timer_eligibility_values_have_stable_browser_order(self):
+        self.assertEqual(
+            sorted(registration.FULL_TIMER_STATES),
+            ['Massachusetts', 'New Hampshire'],
+        )
+        self.assertEqual(
+            sorted(registration.FULL_TIMER_STATUS_KEYS),
+            ['ft', 'fulltime', 'fulltimer'],
+        )
+
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):
         before_cutoff = datetime(2026, 10, 10, 3, 59, 59, tzinfo=timezone.utc)
