@@ -459,11 +459,11 @@ class SheetTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Registration row was not found'):
                 google_sheets.update_registration_payment('missing-id', **{'Payment Status': 'Paid'})
 
-    @patch.dict(os.environ, {}, clear=False)
-    def test_sheet_opens_expected_spreadsheet_and_tab(self):
-        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
-        os.environ.pop('REGISTRATION_SPREADSHEET', None)
-        os.environ.pop('REGISTRATION_WORKSHEET', None)
+    @patch.dict(os.environ, {'APP_ENV': 'development'}, clear=False)
+    def test_non_production_opens_test_spreadsheet(self):
+        os.environ.pop('REGISTRATION_TEST_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_TEST_SPREADSHEET', None)
+        os.environ.pop('REGISTRATION_TEST_WORKSHEET', None)
         worksheet = Mock()
         worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         spreadsheet = Mock()
@@ -475,8 +475,63 @@ class SheetTests(unittest.TestCase):
             result = google_sheets.registration_worksheet()
 
         self.assertIs(result, worksheet)
-        sheets_client.open.assert_called_once_with('2026 Fall Retreat - Registration (Responses)')
+        sheets_client.open.assert_called_once_with(
+            '2026 Fall Retreat - Registration (Test Responses)'
+        )
         spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
+
+    @patch.dict(os.environ, {'APP_ENV': 'production'}, clear=False)
+    def test_production_opens_live_spreadsheet(self):
+        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET', None)
+        os.environ.pop('REGISTRATION_WORKSHEET', None)
+        worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        sheets_client.open.assert_called_once_with(
+            '2026 Fall Retreat - Registration (Responses)'
+        )
+
+    @patch.dict(os.environ, {'RENDER': 'true'}, clear=False)
+    def test_render_defaults_to_production_sheet(self):
+        os.environ.pop('APP_ENV', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET', None)
+
+        settings = google_sheets.registration_sheet_settings()
+
+        self.assertEqual(
+            settings['spreadsheet_title'],
+            '2026 Fall Retreat - Registration (Responses)',
+        )
+
+    @patch.dict(
+        os.environ,
+        {
+            'APP_ENV': 'staging',
+            'REGISTRATION_TEST_SPREADSHEET_ID': 'test-sheet-id',
+        },
+        clear=False,
+    )
+    def test_non_production_prefers_test_spreadsheet_id(self):
+        worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open_by_key.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        sheets_client.open_by_key.assert_called_once_with('test-sheet-id')
 
     def test_sheet_adds_new_columns_to_existing_valid_headers(self):
         worksheet = Mock()

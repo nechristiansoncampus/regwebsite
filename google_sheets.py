@@ -36,19 +36,45 @@ REGISTRATION_HEADERS = [
 ]
 
 
-def registration_worksheet():
-    spreadsheet_id = os.environ.get('REGISTRATION_SPREADSHEET_ID')
-    spreadsheet_title = os.environ.get(
-        'REGISTRATION_SPREADSHEET',
-        '2026 Fall Retreat - Registration (Responses)',
+def registration_sheet_settings():
+    app_env = os.environ.get('APP_ENV')
+    is_production = (
+        app_env.strip().casefold() == 'production'
+        if app_env
+        else bool(os.environ.get('RENDER'))
     )
+    if is_production:
+        return {
+            'spreadsheet_id': os.environ.get('REGISTRATION_SPREADSHEET_ID'),
+            'spreadsheet_title': os.environ.get(
+                'REGISTRATION_SPREADSHEET',
+                '2026 Fall Retreat - Registration (Responses)',
+            ),
+            'worksheet_title': os.environ.get('REGISTRATION_WORKSHEET', 'Registrations'),
+        }
+
+    return {
+        'spreadsheet_id': os.environ.get('REGISTRATION_TEST_SPREADSHEET_ID'),
+        'spreadsheet_title': os.environ.get(
+            'REGISTRATION_TEST_SPREADSHEET',
+            '2026 Fall Retreat - Registration (Test Responses)',
+        ),
+        'worksheet_title': os.environ.get(
+            'REGISTRATION_TEST_WORKSHEET',
+            'Registrations',
+        ),
+    }
+
+
+def registration_worksheet():
+    settings = registration_sheet_settings()
 
     client = pygsheets.authorize(service_account_env_var='service_credentials')
-    if spreadsheet_id:
-        spreadsheet = client.open_by_key(spreadsheet_id)
+    if settings['spreadsheet_id']:
+        spreadsheet = client.open_by_key(settings['spreadsheet_id'])
     else:
-        spreadsheet = client.open(spreadsheet_title)
-    worksheet_title = os.environ.get('REGISTRATION_WORKSHEET', 'Registrations')
+        spreadsheet = client.open(settings['spreadsheet_title'])
+    worksheet_title = settings['worksheet_title']
 
     try:
         worksheet = spreadsheet.worksheet_by_title(worksheet_title)
