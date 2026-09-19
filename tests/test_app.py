@@ -175,6 +175,7 @@ class RouteTests(unittest.TestCase):
         )
         self.assertIn(b'$62.50', response.data)
 
+    @patch.dict(os.environ, {'PAYPAL_CLIENT_ID': 'test-client-id'}, clear=False)
     def test_returning_attendee_reaches_checkout(self):
         response = self.client.post('/register', data=registration_data())
         self.assertIn(b'<h1>Checkout</h1>', response.data)
