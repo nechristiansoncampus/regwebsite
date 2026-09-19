@@ -66,6 +66,11 @@ class RouteTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(self.client.get(path).status_code, 200)
 
+    def test_flask_secret_key_is_required(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'FLASK_SECRET_KEY must be set'):
+                home.required_setting('FLASK_SECRET_KEY')
+
     def test_home_page_defaults_to_fall_retreat(self):
         home_page = self.client.get('/').get_data(as_text=True)
         spring_page = self.client.get('/spring-retreat').get_data(as_text=True)
@@ -393,6 +398,7 @@ class SheetTests(unittest.TestCase):
     def tearDown(self):
         self.late_fee_patcher.stop()
 
+    @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_record_registration_writes_every_column(self):
         worksheet = Mock()
         worksheet.get_col.return_value = ['Registration ID']
