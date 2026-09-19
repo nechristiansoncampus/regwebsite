@@ -201,6 +201,15 @@
 
     .fieldError[hidden]{ display:none; }
 
+    @media (min-width: 720px){
+      .fieldLabelRow{ flex-wrap:nowrap; }
+      .fieldError{
+        min-width:0;
+        text-align:right;
+        white-space:nowrap;
+      }
+    }
+
     .optional{
       color:rgba(36,22,11,.46);
       font-weight:700;

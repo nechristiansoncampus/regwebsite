@@ -109,6 +109,8 @@ class RouteTests(unittest.TestCase):
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
         self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
+        self.assertIn('.fieldLabelRow{ flex-wrap:nowrap; }', html)
+        self.assertIn('white-space:nowrap;', html)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
