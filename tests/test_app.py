@@ -73,6 +73,15 @@ class RouteTests(unittest.TestCase):
         self.assertIn('<title>Fall Retreat', home_page)
         self.assertIn('Spring Retreat</title>', spring_page)
 
+    def test_retreat_pages_load_shared_interactions(self):
+        for path in ['/', '/spring-retreat']:
+            with self.subTest(path=path):
+                html = self.client.get(path).get_data(as_text=True)
+                self.assertIn('src="/static/js/retreat.js" defer', html)
+        response = self.client.get('/static/js/retreat.js')
+        self.assertEqual(response.status_code, 200)
+        response.close()
+
     def test_home_page_question_link_uses_browser_email_compose(self):
         home_page = self.client.get('/').get_data(as_text=True)
         self.assertIn('https://mail.google.com/mail/?view=cm&amp;fs=1', home_page)
