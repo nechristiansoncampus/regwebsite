@@ -17,6 +17,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      FLASK_SECRET_KEY: ci-only-test-secret
 
     steps:
       - name: Check out repository
