@@ -215,6 +215,19 @@ class RouteTests(unittest.TestCase):
                 self.assertIn(b'<h1>Checkout</h1>', response.data)
                 self.record_registration.assert_not_called()
 
+    def test_stale_full_timer_text_does_not_exempt_a_student_status(self):
+        response = self.client.post(
+            '/register',
+            data=registration_data(
+                school_state='New Hampshire',
+                status='Freshman',
+                status_other='FT',
+            ),
+        )
+
+        self.assertIn(b'<h1>Checkout</h1>', response.data)
+        self.record_registration.assert_not_called()
+
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_other_status_skips_attendance_question_without_discount(self):
         for attended_before in ['', 'no']:

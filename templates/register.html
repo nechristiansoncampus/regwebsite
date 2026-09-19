@@ -814,6 +814,8 @@
       const isOther = statusSelect.value === 'Other';
       statusOtherWrap.classList.toggle('isVisible', isOther);
       statusOtherInput.required = isOther;
+      statusOtherInput.disabled = !isOther;
+      if (!isOther) statusOtherInput.value = '';
       updatePaymentRequirements();
     }
 
@@ -857,6 +859,7 @@
     });
 
     statusOtherInput.addEventListener('input', updateStatusOther);
+    statusSelect.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
 
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
