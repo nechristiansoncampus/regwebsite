@@ -333,6 +333,7 @@ class RouteTests(unittest.TestCase):
                 data=registration_data(payment_option='scholarship'),
             )
         self.assertIn(b'We could not save your registration.', response.data)
+        self.assertIn(b'id="dismissRegistrationError"', response.data)
 
     def test_checkout_requires_registration_session(self):
         response = self.client.get('/checkout')

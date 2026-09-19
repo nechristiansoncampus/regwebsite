@@ -96,12 +96,38 @@
       font-weight:750;
     }
 
-    .message:empty{
+    .message.isEmpty{
       display:none;
     }
 
     .message.error{ color:#991b1b; }
     .message.success{ color:#166534; }
+
+    .message.error{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .messageDismiss{
+      flex:0 0 28px;
+      width:28px;
+      height:28px;
+      padding:0;
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      color:inherit;
+      font:inherit;
+      font-size:22px;
+      font-weight:400;
+      line-height:1;
+      cursor:pointer;
+    }
+
+    .messageDismiss:hover,
+    .messageDismiss:focus-visible{ background:rgba(153,27,27,.09); }
 
     .paymentTitle{
       margin:0 0 12px;
@@ -180,7 +206,10 @@
     {% if paypal_client_id %}
       <section id="payment-area" class="paymentArea" aria-busy="false">
         <h2 class="paymentTitle">Pay with PayPal</h2>
-        <div id="checkout-message" class="message" aria-live="polite">Loading PayPal checkout...</div>
+        <div id="checkout-message" class="message" aria-live="polite">
+          <span id="checkout-message-text">Loading PayPal checkout...</span>
+          <button id="dismiss-checkout-message" class="messageDismiss" type="button" aria-label="Dismiss error" hidden>&times;</button>
+        </div>
         <div id="payment-processing" class="processing" role="status" aria-live="polite" hidden>
           <span class="processingSpinner" aria-hidden="true"></span>
           <div>
@@ -192,6 +221,8 @@
       </section>
       <script>
         const message = document.getElementById('checkout-message');
+        const messageText = document.getElementById('checkout-message-text');
+        const dismissMessage = document.getElementById('dismiss-checkout-message');
         const paymentArea = document.getElementById('payment-area');
         const processingPanel = document.getElementById('payment-processing');
         const processingSpinner = processingPanel.querySelector('.processingSpinner');
@@ -200,9 +231,12 @@
         let isFinalizing = false;
 
         function showMessage(text, type) {
-          message.textContent = text;
-          message.className = `message ${type || ''}`;
+          messageText.textContent = text;
+          message.className = `message ${type || ''}${text ? '' : ' isEmpty'}`;
+          dismissMessage.hidden = type !== 'error' || !text;
         }
+
+        dismissMessage.addEventListener('click', () => showMessage(''));
 
         function showProcessing(title, detail, showSpinner = true) {
           isFinalizing = true;
