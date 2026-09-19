@@ -920,6 +920,10 @@ class PayPalTests(unittest.TestCase):
         self.assertIn(b'See you there, Jamie!', confirmation.data)
         self.assertIn(b'confirmation email shortly', confirmation.data)
         self.assertIn(b'mailto:nechristiansoncampus@gmail.com', confirmation.data)
+        self.assertIn(b'Jamie Student', confirmation.data)
+        self.assertIn(b'student@example.com', confirmation.data)
+        self.assertIn(b'MIT', confirmation.data)
+        self.assertIn(b'Senior', confirmation.data)
         self.assertIn(b'href="/"', confirmation.data)
 
     @patch.object(home, 'record_registration')

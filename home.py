@@ -259,6 +259,10 @@ def save_paid_registration(registration):
 
     session['completed_registration'] = {
         'first_name': registration.get('first_name', ''),
+        'last_name': registration.get('last_name', ''),
+        'email': registration.get('email', ''),
+        'campus': registration.get('campus', ''),
+        'status': registration.get('status', ''),
     }
     session.pop('registration', None)
     session.pop('registration_token', None)

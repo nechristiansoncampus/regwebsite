@@ -112,11 +112,7 @@
       <a href="mailto:nechristiansoncampus@gmail.com">nechristiansoncampus@gmail.com</a>.
     </p>
 
-    <div class="summary">
-      <div class="row"><span>Name</span><span>{{ registration.first_name }} {{ registration.last_name }}</span></div>
-      <div class="row"><span>Email</span><span>{{ registration.email }}</span></div>
-      <div class="row"><span>School</span><span>{{ registration.campus }}</span></div>
-    </div>
+    {% include '_registration_summary.html' %}
     <a class="homeLink" href="{{ url_for('home') }}">Back to home</a>
   </main>
 </body>
