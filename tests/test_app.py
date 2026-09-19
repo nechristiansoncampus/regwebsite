@@ -208,6 +208,7 @@ class RouteTests(unittest.TestCase):
                         ),
                     )
                     self.assertIn(b'No payment is required.', response.data)
+                    self.assertIn(b'href="/">Back to home</a>', response.data)
                     recorded = self.record_registration.call_args.args[0]
                     self.assertEqual(recorded['payment_option'], 'not_required')
                     self.record_registration.reset_mock()
@@ -276,6 +277,7 @@ class RouteTests(unittest.TestCase):
                     ),
                 )
                 self.assertIn(b'Charles Savona', response.data)
+                self.assertIn(b'href="/">Back to home</a>', response.data)
 
     def test_other_school_is_normalized_before_recording(self):
         self.client.post(
