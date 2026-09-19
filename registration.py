@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 
 EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+FULL_TIMER_STATES = frozenset({'Massachusetts', 'New Hampshire'})
+FULL_TIMER_STATUS_KEYS = frozenset({'ft', 'fulltime', 'fulltimer'})
 
 
 def parse_registration(form):
@@ -138,7 +140,7 @@ def is_full_timer(registration):
         return False
     status = registration.get('status_other') or registration.get('status', '')
     compact_status = re.sub(r'[^a-z0-9]+', '', status.casefold())
-    return compact_status in {'ft', 'fulltime', 'fulltimer'}
+    return compact_status in FULL_TIMER_STATUS_KEYS
 
 
 def is_ccsu(registration):
@@ -151,7 +153,7 @@ def is_ccsu(registration):
 
 def payment_not_required(registration):
     is_eligible_full_timer = (
-        registration.get('school_state') in {'Massachusetts', 'New Hampshire'}
+        registration.get('school_state') in FULL_TIMER_STATES
         and is_full_timer(registration)
     )
     return is_ccsu(registration) or is_eligible_full_timer

@@ -628,6 +628,8 @@
     const firstRetreatQuestion = document.getElementById('firstRetreatQuestion');
     const attendedBeforeFields = Array.from(form.querySelectorAll('input[name="attended_before"]'));
     const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
+    const fullTimerStates = {{ full_timer_states | tojson }};
+    const fullTimerStatusKeys = {{ full_timer_status_keys | tojson }};
 
     let currentPage = 0;
 
@@ -727,11 +729,10 @@
     function isFullTimer() {
       if (!isOtherStatus()) return false;
       const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
-      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
+      return fullTimerStatusKeys.includes(compactStatus);
     }
 
     function paymentNotRequired() {
-      const fullTimerStates = ['Massachusetts', 'New Hampshire'];
       return isCcsu() || (fullTimerStates.includes(selectedSchoolState()) && isFullTimer());
     }
 

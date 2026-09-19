@@ -109,6 +109,45 @@
       letter-spacing:0;
     }
 
+    .processing{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-height:92px;
+      padding:16px;
+      border:1px solid rgba(21,128,61,.24);
+      border-radius:14px;
+      background:rgba(236,253,245,.72);
+    }
+
+    .processing[hidden]{ display:none; }
+
+    .processingSpinner{
+      width:28px;
+      height:28px;
+      flex:0 0 28px;
+      border:3px solid rgba(21,128,61,.20);
+      border-top-color:#15803d;
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+
+    .processing strong{
+      display:block;
+      margin-bottom:3px;
+      font-size:16px;
+    }
+
+    .processing p{ font-size:14px; }
+
+    .paymentArea.isProcessing #paypal-button-container{ display:none; }
+
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+
+    @media (prefers-reduced-motion: reduce){
+      .processingSpinner{ animation:none; }
+    }
+
   </style>
 </head>
 <body>
@@ -139,15 +178,41 @@
     </div>
 
     {% if paypal_client_id %}
-      <h2 class="paymentTitle">Pay with PayPal</h2>
-      <div id="checkout-message" class="message" aria-live="polite">Loading PayPal checkout...</div>
-      <div id="paypal-button-container"></div>
+      <section id="payment-area" class="paymentArea" aria-busy="false">
+        <h2 class="paymentTitle">Pay with PayPal</h2>
+        <div id="checkout-message" class="message" aria-live="polite">Loading PayPal checkout...</div>
+        <div id="payment-processing" class="processing" role="status" aria-live="polite" hidden>
+          <span class="processingSpinner" aria-hidden="true"></span>
+          <div>
+            <strong id="processing-title">Finalizing your registration</strong>
+            <p id="processing-detail">Your payment was submitted. Please keep this page open.</p>
+          </div>
+        </div>
+        <div id="paypal-button-container"></div>
+      </section>
       <script>
         const message = document.getElementById('checkout-message');
+        const paymentArea = document.getElementById('payment-area');
+        const processingPanel = document.getElementById('payment-processing');
+        const processingSpinner = processingPanel.querySelector('.processingSpinner');
+        const processingTitle = document.getElementById('processing-title');
+        const processingDetail = document.getElementById('processing-detail');
+        let isFinalizing = false;
 
         function showMessage(text, type) {
           message.textContent = text;
           message.className = `message ${type || ''}`;
+        }
+
+        function showProcessing(title, detail, showSpinner = true) {
+          isFinalizing = true;
+          paymentArea.classList.add('isProcessing');
+          paymentArea.setAttribute('aria-busy', 'true');
+          processingTitle.textContent = title;
+          processingDetail.textContent = detail;
+          processingSpinner.hidden = !showSpinner;
+          processingPanel.hidden = false;
+          showMessage('');
         }
 
         function renderPayPalButtons() {
@@ -175,19 +240,38 @@
               return order.id;
             },
             async onApprove(data) {
-              const response = await fetch(`/api/paypal/orders/${data.orderID}/capture`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-              });
-              const details = await response.json();
-              if (!response.ok) {
-                throw new Error(details.error || 'Unable to capture PayPal payment.');
-              }
-              if (details.redirect_url) {
-                window.location.assign(details.redirect_url);
+              if (isFinalizing) return;
+              showProcessing(
+                'Finalizing your registration',
+                'Your payment was submitted. Please keep this page open.'
+              );
+
+              try {
+                const response = await fetch(`/api/paypal/orders/${data.orderID}/capture`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                const details = await response.json();
+                if (!response.ok) {
+                  throw new Error(details.error || 'Unable to finish your registration.');
+                }
+                if (details.redirect_url) {
+                  window.location.assign(details.redirect_url);
+                  return;
+                }
+                showProcessing(
+                  'Payment is still processing',
+                  'Please do not submit another payment. Contact us if this page does not update.'
+                );
+              } catch (error) {
+                const reason = error.message || 'We could not finish your registration.';
+                showProcessing(
+                  'We could not confirm your registration',
+                  `${reason} Please do not submit another payment. Contact us for help.`,
+                  false
+                );
                 return;
               }
-              throw new Error('Payment is still processing. Please contact us before trying again.');
             },
             onCancel() {
               showMessage('Checkout cancelled. No payment was taken.');

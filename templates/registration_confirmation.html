@@ -69,6 +69,23 @@
 
     .row span:first-child{ color:var(--muted); }
     .row span:last-child{ text-align:right; }
+
+    .homeLink{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:fit-content;
+      min-height:50px;
+      margin:24px auto 0;
+      padding:0 22px;
+      border:1px solid rgba(180,83,9,.28);
+      border-radius:14px;
+      background:linear-gradient(90deg, rgba(180,83,9,.18), rgba(245,158,11,.20), rgba(21,128,61,.12));
+      color:var(--ink);
+      font-weight:800;
+      text-decoration:none;
+      box-shadow:0 14px 34px rgba(180,83,9,.13);
+    }
   </style>
 </head>
 <body>
@@ -89,6 +106,7 @@
       <div class="row"><span>School</span><span>{{ registration.campus }}</span></div>
       <div class="row"><span>Status</span><span>{{ registration.status }}</span></div>
     </div>
+    <a class="homeLink" href="{{ url_for('home') }}">Back to home</a>
   </main>
 </body>
 </html>

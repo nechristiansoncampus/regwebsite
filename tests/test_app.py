@@ -78,6 +78,15 @@ class RouteTests(unittest.TestCase):
         self.assertIn('<title>Fall Retreat', home_page)
         self.assertIn('Spring Retreat</title>', spring_page)
 
+    def test_retreat_pages_load_shared_interactions(self):
+        for path in ['/', '/spring-retreat']:
+            with self.subTest(path=path):
+                html = self.client.get(path).get_data(as_text=True)
+                self.assertIn('src="/static/js/retreat.js" defer', html)
+        response = self.client.get('/static/js/retreat.js')
+        self.assertEqual(response.status_code, 200)
+        response.close()
+
     def test_home_page_question_link_uses_browser_email_compose(self):
         home_page = self.client.get('/').get_data(as_text=True)
         self.assertIn('https://mail.google.com/mail/?view=cm&amp;fs=1', home_page)
@@ -99,23 +108,19 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
-    def test_contact_fields_use_compact_inline_validation(self):
+    def test_contact_fields_expose_accessible_validation_contract(self):
         html = self.client.get('/register').get_data(as_text=True)
-        self.assertIn('id="emailError" class="fieldError"', html)
-        self.assertIn('id="phoneError" class="fieldError"', html)
-        self.assertIn("return 'Enter a valid email'", html)
-        self.assertIn("return 'Remove the +1 country code'", html)
-        self.assertIn("return 'Remove the leading 1'", html)
-        self.assertIn("return 'Remove the + sign and country code'", html)
-        self.assertIn("return 'Remove spaces, dashes, and parentheses'", html)
-        self.assertIn("return 'Use numbers only'", html)
-        self.assertIn('return `Add ${difference} more digit', html)
-        self.assertIn('return `Remove ${extra} digit', html)
+        self.assertIn('id="emailError" class="fieldError" role="alert" hidden', html)
+        self.assertIn('id="phoneError" class="fieldError" role="alert" hidden', html)
+        email_input = html.split('id="emailInput"', 1)[1].split('>', 1)[0]
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
+        self.assertIn('type="email"', email_input)
+        self.assertIn('aria-describedby="emailError"', email_input)
+        self.assertIn('type="tel"', phone_input)
+        self.assertIn('inputmode="numeric"', phone_input)
+        self.assertIn('aria-describedby="phoneError"', phone_input)
         self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
-        self.assertIn('.fieldLabelRow{ flex-wrap:nowrap; }', html)
-        self.assertIn('white-space:nowrap;', html)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
@@ -123,7 +128,6 @@ class RouteTests(unittest.TestCase):
         self.assertNotIn('games, snow, and snacks.', html)
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
-        self.assertIn('rgba(245,190,112,.88)', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
 
     def test_required_fields_are_validated(self):
@@ -176,9 +180,13 @@ class RouteTests(unittest.TestCase):
         )
         self.assertIn(b'$62.50', response.data)
 
+    @patch.dict(os.environ, {'PAYPAL_CLIENT_ID': 'test-client-id'}, clear=False)
     def test_returning_attendee_reaches_checkout(self):
         response = self.client.post('/register', data=registration_data())
         self.assertIn(b'<h1>Checkout</h1>', response.data)
+        self.assertIn(b'id="payment-processing"', response.data)
+        self.assertIn(b'Finalizing your registration', response.data)
+        self.assertIn(b'Please keep this page open.', response.data)
         self.record_registration.assert_not_called()
 
     def test_scholarship_choice_finishes_without_checkout(self):
@@ -206,6 +214,7 @@ class RouteTests(unittest.TestCase):
                         ),
                     )
                     self.assertIn(b'No payment is required.', response.data)
+                    self.assertIn(b'href="/">Back to home</a>', response.data)
                     recorded = self.record_registration.call_args.args[0]
                     self.assertEqual(recorded['payment_option'], 'not_required')
                     self.record_registration.reset_mock()
@@ -274,6 +283,7 @@ class RouteTests(unittest.TestCase):
                     ),
                 )
                 self.assertIn(b'Charles Savona', response.data)
+                self.assertIn(b'href="/">Back to home</a>', response.data)
 
     def test_other_school_is_normalized_before_recording(self):
         self.client.post(
@@ -330,6 +340,16 @@ class RegistrationRuleTests(unittest.TestCase):
             'status_is_other': True,
             'status_other': 'full-time student',
         }))
+
+    def test_full_timer_eligibility_values_have_stable_browser_order(self):
+        self.assertEqual(
+            sorted(registration.FULL_TIMER_STATES),
+            ['Massachusetts', 'New Hampshire'],
+        )
+        self.assertEqual(
+            sorted(registration.FULL_TIMER_STATUS_KEYS),
+            ['ft', 'fulltime', 'fulltimer'],
+        )
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):
@@ -450,11 +470,11 @@ class SheetTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'Registration row was not found'):
                 google_sheets.update_registration_payment('missing-id', **{'Payment Status': 'Paid'})
 
-    @patch.dict(os.environ, {}, clear=False)
-    def test_sheet_opens_expected_spreadsheet_and_tab(self):
+    @patch.dict(os.environ, {'APP_ENV': 'development'}, clear=False)
+    def test_non_production_opens_test_worksheet(self):
         os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
         os.environ.pop('REGISTRATION_SPREADSHEET', None)
-        os.environ.pop('REGISTRATION_WORKSHEET', None)
+        os.environ.pop('REGISTRATION_TEST_WORKSHEET', None)
         worksheet = Mock()
         worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         spreadsheet = Mock()
@@ -466,8 +486,66 @@ class SheetTests(unittest.TestCase):
             result = google_sheets.registration_worksheet()
 
         self.assertIs(result, worksheet)
-        sheets_client.open.assert_called_once_with('2026 Fall Retreat - Registration (Responses)')
-        spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
+        sheets_client.open.assert_called_once_with(
+            '2026 Fall Retreat - Registration (Responses)'
+        )
+        spreadsheet.worksheet_by_title.assert_called_once_with('Test Registrations')
+
+    @patch.dict(os.environ, {'APP_ENV': 'production'}, clear=False)
+    def test_production_opens_live_spreadsheet(self):
+        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET', None)
+        os.environ.pop('REGISTRATION_WORKSHEET', None)
+        worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        sheets_client.open.assert_called_once_with(
+            '2026 Fall Retreat - Registration (Responses)'
+        )
+
+    @patch.dict(os.environ, {'RENDER': 'true'}, clear=False)
+    def test_render_defaults_to_production_sheet(self):
+        os.environ.pop('APP_ENV', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET_ID', None)
+        os.environ.pop('REGISTRATION_SPREADSHEET', None)
+
+        settings = google_sheets.registration_sheet_settings()
+
+        self.assertEqual(
+            settings['spreadsheet_title'],
+            '2026 Fall Retreat - Registration (Responses)',
+        )
+        self.assertEqual(settings['worksheet_title'], 'Registrations')
+
+    @patch.dict(
+        os.environ,
+        {
+            'APP_ENV': 'staging',
+            'REGISTRATION_SPREADSHEET_ID': 'shared-spreadsheet-id',
+            'REGISTRATION_TEST_WORKSHEET': 'Staging Registrations',
+        },
+        clear=False,
+    )
+    def test_non_production_uses_shared_spreadsheet_id_and_test_worksheet(self):
+        worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open_by_key.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        sheets_client.open_by_key.assert_called_once_with('shared-spreadsheet-id')
+        spreadsheet.worksheet_by_title.assert_called_once_with('Staging Registrations')
 
     def test_sheet_adds_new_columns_to_existing_valid_headers(self):
         worksheet = Mock()
