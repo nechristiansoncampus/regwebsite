@@ -429,6 +429,7 @@
       {% endif %}
 
       <form id="registrationForm" method="post" action="/register">
+        <input type="hidden" name="registration_token" value="{{ session.get('registration_form_token', '') }}">
         <div class="formPage isActive" data-page="1">
           <div class="grid two">
             <label>
@@ -879,10 +880,20 @@
       });
     });
 
+    let submissionStarted = false;
     form.addEventListener('submit', (event) => {
       if (!validatePage(currentPage)) {
         event.preventDefault();
+        return;
       }
+      if (submissionStarted) {
+        event.preventDefault();
+        return;
+      }
+      submissionStarted = true;
+      backButton.disabled = true;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
     });
 
     updateStateFlow();

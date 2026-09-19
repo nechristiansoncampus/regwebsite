@@ -198,6 +198,33 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'href="/">Back to home</a>', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
+    def test_repeated_form_submission_reuses_registration_id(self):
+        html = self.client.get('/register').get_data(as_text=True)
+        token = html.split('name="registration_token" value="', 1)[1].split('"', 1)[0]
+        form_data = registration_data(
+            registration_token=token,
+            payment_option='scholarship',
+        )
+
+        first_response = self.client.post('/register', data=form_data)
+        second_response = self.client.post('/register', data=form_data)
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        registration_ids = [call.args[1] for call in self.record_registration.call_args_list]
+        self.assertEqual(registration_ids, [token, token])
+
+    def test_expired_registration_form_is_rejected(self):
+        self.client.get('/register')
+
+        response = self.client.post(
+            '/register',
+            data=registration_data(registration_token='stale-token'),
+        )
+
+        self.assertIn(b'This registration form expired.', response.data)
+        self.record_registration.assert_not_called()
+
     def test_eligible_state_full_timer_status_skips_payment(self):
         for state in ['Massachusetts', 'New Hampshire']:
             for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
