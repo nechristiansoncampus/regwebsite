@@ -198,6 +198,33 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'href="/">Back to home</a>', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
+    def test_repeated_form_submission_reuses_registration_id(self):
+        html = self.client.get('/register').get_data(as_text=True)
+        token = html.split('name="registration_token" value="', 1)[1].split('"', 1)[0]
+        form_data = registration_data(
+            registration_token=token,
+            payment_option='scholarship',
+        )
+
+        first_response = self.client.post('/register', data=form_data)
+        second_response = self.client.post('/register', data=form_data)
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        registration_ids = [call.args[1] for call in self.record_registration.call_args_list]
+        self.assertEqual(registration_ids, [token, token])
+
+    def test_expired_registration_form_is_rejected(self):
+        self.client.get('/register')
+
+        response = self.client.post(
+            '/register',
+            data=registration_data(registration_token='stale-token'),
+        )
+
+        self.assertIn(b'This registration form expired.', response.data)
+        self.record_registration.assert_not_called()
+
     def test_eligible_state_full_timer_status_skips_payment(self):
         for state in ['Massachusetts', 'New Hampshire']:
             for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
@@ -306,6 +333,7 @@ class RouteTests(unittest.TestCase):
                 data=registration_data(payment_option='scholarship'),
             )
         self.assertIn(b'We could not save your registration.', response.data)
+        self.assertIn(b'id="dismissRegistrationError"', response.data)
 
     def test_checkout_requires_registration_session(self):
         response = self.client.get('/checkout')
@@ -422,6 +450,7 @@ class SheetTests(unittest.TestCase):
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_record_registration_writes_every_column(self):
         worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         worksheet.get_col.return_value = ['Registration ID']
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.record_registration(
@@ -433,8 +462,9 @@ class SheetTests(unittest.TestCase):
                 'registration-123',
             )
 
-        row = worksheet.append_table.call_args.kwargs['values']
+        row_number, row = worksheet.update_row.call_args.args
         values = dict(zip(google_sheets.REGISTRATION_HEADERS, row))
+        self.assertEqual(row_number, 2)
         self.assertEqual(len(row), len(google_sheets.REGISTRATION_HEADERS))
         self.assertEqual(values['Registration ID'], 'registration-123')
         self.assertEqual(values['Allergies & Dietary Restrictions'], 'Peanuts')
@@ -444,14 +474,16 @@ class SheetTests(unittest.TestCase):
 
     def test_record_registration_does_not_duplicate_registration_id(self):
         worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         worksheet.get_col.return_value = ['Registration ID', 'registration-123']
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.record_registration(registration_data(), 'registration-123')
 
-        worksheet.append_table.assert_not_called()
+        worksheet.update_row.assert_not_called()
 
     def test_payment_update_targets_registration_row(self):
         worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         worksheet.get_col.return_value = ['Registration ID', 'first-id', 'target-id']
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.update_registration_payment(
@@ -466,6 +498,7 @@ class SheetTests(unittest.TestCase):
 
     def test_missing_registration_row_raises(self):
         worksheet = Mock()
+        worksheet.get_row.return_value = google_sheets.REGISTRATION_HEADERS[:]
         worksheet.get_col.return_value = ['Registration ID']
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             with self.assertRaisesRegex(RuntimeError, 'Registration row was not found'):
@@ -560,6 +593,57 @@ class SheetTests(unittest.TestCase):
             google_sheets.registration_worksheet()
 
         worksheet.update_row.assert_called_once_with(1, google_sheets.REGISTRATION_HEADERS)
+
+    def test_sheet_allows_custom_columns_among_registration_headers(self):
+        worksheet = Mock()
+        headers = google_sheets.REGISTRATION_HEADERS[:]
+        headers.insert(2, 'Followed Up')
+        headers.append('Internal Notes')
+        worksheet.get_row.return_value = headers
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            result = google_sheets.registration_worksheet()
+
+        self.assertIs(result, worksheet)
+        worksheet.update_row.assert_not_called()
+
+    @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
+    def test_record_registration_aligns_values_around_custom_columns(self):
+        headers = google_sheets.REGISTRATION_HEADERS[:]
+        headers.insert(2, 'Followed Up')
+        worksheet = Mock()
+        worksheet.get_row.return_value = headers
+        worksheet.get_col.return_value = ['Registration ID', 'existing-registration']
+
+        with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
+            google_sheets.record_registration(registration_data(), 'registration-123')
+
+        row_number, row = worksheet.update_row.call_args.args
+        values = dict(zip(headers, row))
+        self.assertEqual(row_number, 3)
+        self.assertEqual(values['Registration ID'], 'registration-123')
+        self.assertEqual(values['Followed Up'], '')
+        self.assertEqual(values['Email'], 'student@example.com')
+
+    def test_payment_update_uses_live_header_positions(self):
+        headers = google_sheets.REGISTRATION_HEADERS[:]
+        headers.insert(2, 'Followed Up')
+        worksheet = Mock()
+        worksheet.get_row.return_value = headers
+        worksheet.get_col.return_value = ['Registration ID', 'registration-123']
+
+        with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
+            google_sheets.update_registration_payment(
+                'registration-123',
+                **{'Payment Status': 'Paid'},
+            )
+
+        payment_column = headers.index('Payment Status') + 1
+        worksheet.update_value.assert_called_once_with((2, payment_column), 'Paid')
 
 
 class PayPalTests(unittest.TestCase):

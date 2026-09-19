@@ -356,12 +356,40 @@
     .followUpQuestion[hidden]{ display:none; }
 
     .error{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
       padding:12px 14px;
       border:1px solid rgba(220,38,38,.22);
       border-radius:12px;
       background:rgba(254,226,226,.76);
       color:var(--danger);
       font-weight:800;
+    }
+
+    .error[hidden]{ display:none; }
+
+    .errorDismiss{
+      width:32px;
+      min-width:32px;
+      min-height:32px;
+      margin:-6px -8px -6px 0;
+      padding:0;
+      border:0;
+      border-radius:50%;
+      background:transparent;
+      color:inherit;
+      font-size:24px;
+      font-weight:400;
+      line-height:1;
+      box-shadow:none;
+    }
+
+    .errorDismiss:hover,
+    .errorDismiss:focus-visible{
+      background:rgba(153,27,27,.09);
     }
 
     .actions{
@@ -425,10 +453,14 @@
       <p id="sectionHint" class="sectionHint">Start with the basics so we can reach you about retreat.</p>
 
       {% if error %}
-        <div class="error">{{ error }}</div>
+        <div id="registrationError" class="error" role="alert">
+          <span>{{ error }}</span>
+          <button id="dismissRegistrationError" class="errorDismiss" type="button" aria-label="Dismiss error">&times;</button>
+        </div>
       {% endif %}
 
       <form id="registrationForm" method="post" action="/register">
+        <input type="hidden" name="registration_token" value="{{ session.get('registration_form_token', '') }}">
         <div class="formPage isActive" data-page="1">
           <div class="grid two">
             <label>
@@ -630,8 +662,21 @@
     const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
     const fullTimerStates = {{ full_timer_states | tojson }};
     const fullTimerStatusKeys = {{ full_timer_status_keys | tojson }};
+    const registrationError = document.getElementById('registrationError');
+    const dismissRegistrationError = document.getElementById('dismissRegistrationError');
 
     let currentPage = 0;
+
+    function clearRegistrationError() {
+      if (registrationError) registrationError.hidden = true;
+    }
+
+    if (dismissRegistrationError) {
+      dismissRegistrationError.addEventListener('click', clearRegistrationError);
+    }
+
+    form.addEventListener('input', clearRegistrationError);
+    form.addEventListener('change', clearRegistrationError);
 
     const pageContent = [
       {
@@ -851,6 +896,7 @@
     }
 
     nextButton.addEventListener('click', () => {
+      clearRegistrationError();
       if (!validatePage(currentPage)) return;
       currentPage = nextActivePageIndex();
       updateStep();
@@ -879,10 +925,20 @@
       });
     });
 
+    let submissionStarted = false;
     form.addEventListener('submit', (event) => {
       if (!validatePage(currentPage)) {
         event.preventDefault();
+        return;
       }
+      if (submissionStarted) {
+        event.preventDefault();
+        return;
+      }
+      submissionStarted = true;
+      backButton.disabled = true;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
     });
 
     updateStateFlow();

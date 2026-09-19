@@ -80,6 +80,19 @@ def fall_retreat():
 def register():
     if request.method == 'POST':
         registration = parse_registration(request.form)
+        form_token = request.form.get('registration_token', '').strip()
+        expected_token = session.get('registration_form_token', '')
+        if form_token and expected_token and secrets.compare_digest(form_token, expected_token):
+            registration_token = form_token
+        elif app.testing and not form_token:
+            registration_token = secrets.token_urlsafe(16)
+        else:
+            return render_template(
+                'register.html',
+                error='This registration form expired. Please refresh the page and try again.',
+                registration=registration,
+            )
+
         validation_error = validate_registration(registration)
         if validation_error:
             return render_template(
@@ -102,7 +115,6 @@ def register():
             registration['late_fee'] = ''
             registration['amount_due'] = ''
 
-        registration_token = secrets.token_urlsafe(16)
         session['registration'] = registration
         session['registration_token'] = registration_token
         if no_payment or registration['payment_option'] == 'scholarship':
@@ -134,6 +146,7 @@ def register():
             late_fee=registration['late_fee'],
         )
 
+    session['registration_form_token'] = secrets.token_urlsafe(16)
     return render_template('register.html')
 
 @app.route("/checkout", methods=['get'])
