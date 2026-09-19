@@ -195,6 +195,7 @@ class RouteTests(unittest.TestCase):
         )
         self.assertIn(b'scholarship application form', response.data)
         self.assertIn(b'No payment is needed right now.', response.data)
+        self.assertIn(b'href="/">Back to home</a>', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
     def test_eligible_state_full_timer_status_skips_payment(self):
