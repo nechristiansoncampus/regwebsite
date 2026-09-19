@@ -11,6 +11,7 @@ import pygsheets
 from google_sheets import record_registration
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
+    has_payment_waiver_code,
     is_ccsu,
     is_other_status,
     late_fee_amount,
@@ -143,6 +144,44 @@ def checkout():
         amount=registration.get('amount_due') or registration_amount(registration),
         late_fee=registration.get('late_fee', ''),
     )
+
+
+@app.route('/api/promo-code', methods=['post'])
+def apply_promo_code():
+    registration = session.get('registration')
+    if not registration:
+        return jsonify({'error': 'Registration is required before applying a promo code.'}), 400
+
+    promo_code = (request.get_json(silent=True) or {}).get('promo_code', '').strip()
+    registration['promo_code'] = promo_code
+    if not has_payment_waiver_code(registration):
+        registration['promo_code'] = ''
+        session['registration'] = registration
+        return jsonify({'error': 'That promo code is not valid.'}), 400
+
+    registration.update({
+        'payment_option': 'not_required',
+        'payment_status': 'Not required',
+        'amount_due': '',
+        'late_fee': '',
+    })
+    try:
+        record_registration(registration, session.get('registration_token'))
+    except Exception:
+        app.logger.exception('Unable to save promo registration to Google Sheets.')
+        return jsonify({'error': 'We could not save your registration. Please try again.'}), 500
+
+    session['completed_registration'] = {
+        'first_name': registration.get('first_name', ''),
+    }
+    session.pop('registration', None)
+    session.pop('registration_token', None)
+    session.pop('paypal_order_id', None)
+    session.pop('payment_completed', None)
+    return jsonify({
+        'status': 'COMPLETED',
+        'redirect_url': url_for('registration_complete'),
+    })
 
 @app.route("/api/paypal/orders", methods=['post'])
 def create_paypal_order():

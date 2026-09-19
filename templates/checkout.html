@@ -108,6 +108,66 @@
       font-size:18px;
       letter-spacing:0;
     }
+
+    .promo{
+      margin:0 0 22px;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.52);
+    }
+
+    .promo label{
+      display:block;
+      margin-bottom:9px;
+      font-size:15px;
+      font-weight:650;
+    }
+
+    .promoRow{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) auto;
+      gap:10px;
+    }
+
+    .promo input,
+    .promo button{
+      min-height:48px;
+      border-radius:10px;
+      font:inherit;
+    }
+
+    .promo input{
+      width:100%;
+      min-width:0;
+      padding:0 13px;
+      border:1px solid rgba(92,45,11,.25);
+      background:#fff;
+      color:var(--ink);
+      font-size:16px;
+      font-weight:400;
+      text-transform:uppercase;
+    }
+
+    .promo button{
+      padding:0 18px;
+      border:1px solid var(--accent);
+      background:var(--accent);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .promo button:disabled{ opacity:.65; cursor:wait; }
+
+    .promoMessage{
+      margin:9px 0 0;
+      color:#991b1b;
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .promoMessage:empty{ display:none; }
   </style>
 </head>
 <body>
@@ -136,6 +196,49 @@
       {% endif %}
       <div class="row"><span>Total</span><span>${{ amount }}</span></div>
     </div>
+
+    <form id="promo-form" class="promo">
+      <label for="promo-code">Have a promo code?</label>
+      <div class="promoRow">
+        <input id="promo-code" name="promo_code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter code">
+        <button id="promo-button" type="submit">Apply</button>
+      </div>
+      <p id="promo-message" class="promoMessage" role="alert" aria-live="polite"></p>
+    </form>
+
+    <script>
+      const promoForm = document.getElementById('promo-form');
+      const promoInput = document.getElementById('promo-code');
+      const promoButton = document.getElementById('promo-button');
+      const promoMessage = document.getElementById('promo-message');
+
+      promoForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const promoCode = promoInput.value.trim();
+        if (!promoCode) {
+          promoMessage.textContent = 'Enter a promo code first.';
+          promoInput.focus();
+          return;
+        }
+
+        promoButton.disabled = true;
+        promoMessage.textContent = '';
+        try {
+          const response = await fetch('/api/promo-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ promo_code: promoCode })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Unable to apply that promo code.');
+          window.location.assign(result.redirect_url);
+        } catch (error) {
+          promoMessage.textContent = error.message || 'Unable to apply that promo code.';
+          promoButton.disabled = false;
+          promoInput.focus();
+        }
+      });
+    </script>
 
     {% if paypal_client_id %}
       <h2 class="paymentTitle">Pay with PayPal</h2>

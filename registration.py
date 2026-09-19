@@ -27,7 +27,7 @@ def parse_registration(form):
         'transportation_other': form.get('transportation_other', '').strip(),
         'car_capacity': form.get('car_capacity', '').strip(),
         'payment_option': form.get('payment_option', '').strip(),
-        'promo_code': form.get('promo_code', '').strip(),
+        'promo_code': '',
         'attended_before': form.get('attended_before', '').strip(),
         'allergies': form.get('allergies', '').strip(),
         'comments': form.get('comments', '').strip(),
@@ -67,9 +67,6 @@ def validate_registration(registration):
             and not registration['car_capacity']
         ):
             return 'Please fill out every field.'
-
-    if registration.get('promo_code') and not has_payment_waiver_code(registration):
-        return 'That promo code is not valid.'
 
     if not payment_not_required(registration):
         if registration['payment_option'] not in ['scholarship', 'pay_full']:

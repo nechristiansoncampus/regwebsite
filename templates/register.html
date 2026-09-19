@@ -564,11 +564,6 @@
               </label>
             </div>
 
-            <label>
-              Promo Code <span class="optional">optional</span>
-              <input id="promoCodeInput" name="promo_code" autocomplete="off" autocapitalize="characters" spellcheck="false" value="{{ registration.promo_code if registration else '' }}">
-            </label>
-
             <div id="firstRetreatQuestion" class="followUpQuestion">
               <div class="choiceLabel">Have you joined us for a retreat before? *</div>
               <div class="stateChoices">
@@ -624,7 +619,6 @@
     const firstRetreatQuestion = document.getElementById('firstRetreatQuestion');
     const attendedBeforeFields = Array.from(form.querySelectorAll('input[name="attended_before"]'));
     const paymentOptionFields = Array.from(form.querySelectorAll('input[name="payment_option"]'));
-    const promoCodeInput = document.getElementById('promoCodeInput');
 
     let currentPage = 0;
 
@@ -725,10 +719,6 @@
       return isCcsu();
     }
 
-    function promoCodeEntered() {
-      return Boolean(promoCodeInput.value.trim());
-    }
-
     function activePages() {
       return pages.filter((page) => {
         if (page.dataset.flow === 'ma') return isMassachusettsFlow();
@@ -779,7 +769,7 @@
       backButton.hidden = currentPage === 0;
       nextButton.hidden = isLastActivePage();
       submitButton.hidden = !isLastActivePage();
-      submitButton.textContent = paymentNotRequired() || promoCodeEntered()
+      submitButton.textContent = paymentNotRequired()
         ? 'Complete Registration'
         : 'Continue to Checkout';
     }
@@ -821,7 +811,7 @@
     }
 
     function updatePaymentRequirements() {
-      const paymentRequired = !paymentNotRequired() && !promoCodeEntered();
+      const paymentRequired = !paymentNotRequired();
       const attendanceRequired = paymentRequired && !isOtherStatus();
       paymentOptionFields.forEach((field) => {
         field.required = paymentRequired;
@@ -861,7 +851,6 @@
 
     statusOtherInput.addEventListener('input', updateStatusOther);
     campusOtherInput.addEventListener('input', updatePaymentRequirements);
-    promoCodeInput.addEventListener('input', updatePaymentRequirements);
 
     [[emailInput, emailError], [phoneInput, phoneError]].forEach(([field, feedback]) => {
       field.addEventListener('blur', () => updateContactFeedback(field, feedback, true));
