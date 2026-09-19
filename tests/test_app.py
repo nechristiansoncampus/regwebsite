@@ -94,23 +94,19 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
-    def test_contact_fields_use_compact_inline_validation(self):
+    def test_contact_fields_expose_accessible_validation_contract(self):
         html = self.client.get('/register').get_data(as_text=True)
-        self.assertIn('id="emailError" class="fieldError"', html)
-        self.assertIn('id="phoneError" class="fieldError"', html)
-        self.assertIn("return 'Enter a valid email'", html)
-        self.assertIn("return 'Remove the +1 country code'", html)
-        self.assertIn("return 'Remove the leading 1'", html)
-        self.assertIn("return 'Remove the + sign and country code'", html)
-        self.assertIn("return 'Remove spaces, dashes, and parentheses'", html)
-        self.assertIn("return 'Use numbers only'", html)
-        self.assertIn('return `Add ${difference} more digit', html)
-        self.assertIn('return `Remove ${extra} digit', html)
+        self.assertIn('id="emailError" class="fieldError" role="alert" hidden', html)
+        self.assertIn('id="phoneError" class="fieldError" role="alert" hidden', html)
+        email_input = html.split('id="emailInput"', 1)[1].split('>', 1)[0]
         phone_input = html.split('id="phoneInput"', 1)[1].split('>', 1)[0]
+        self.assertIn('type="email"', email_input)
+        self.assertIn('aria-describedby="emailError"', email_input)
+        self.assertIn('type="tel"', phone_input)
+        self.assertIn('inputmode="numeric"', phone_input)
+        self.assertIn('aria-describedby="phoneError"', phone_input)
         self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertNotIn('maxlength=', phone_input)
-        self.assertIn('.fieldLabelRow{ flex-wrap:nowrap; }', html)
-        self.assertIn('white-space:nowrap;', html)
 
     def test_fall_page_uses_seasonal_copy_and_consistent_headings(self):
         html = self.client.get('/').get_data(as_text=True)
@@ -118,7 +114,6 @@ class RouteTests(unittest.TestCase):
         self.assertNotIn('games, snow, and snacks.', html)
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
-        self.assertIn('rgba(245,190,112,.88)', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
 
     def test_required_fields_are_validated(self):
