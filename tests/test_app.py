@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
+import email_service
 import google_sheets
 import home
 import paypal_service
@@ -43,6 +44,98 @@ class FakeResponse:
 
     def json(self):
         return self.payload
+
+
+class EmailConfirmationTests(unittest.TestCase):
+    def test_confirmation_is_disabled_without_smtp_credentials(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertFalse(email_service.email_confirmation_configured())
+            self.assertFalse(
+                email_service.send_confirmation_email(registration_data(), 'paid')
+            )
+
+    @patch.dict(
+        os.environ,
+        {
+            'SMTP_HOST': 'smtp.gmail.com',
+            'SMTP_PORT': '587',
+            'SMTP_USERNAME': 'sender@example.com',
+            'SMTP_APP_PASSWORD': 'app-password',
+            'SMTP_FROM_NAME': 'Retreat Team',
+        },
+        clear=True,
+    )
+    @patch.object(email_service.smtplib, 'SMTP')
+    def test_confirmation_uses_tls_and_contains_retreat_details(self, smtp_class):
+        smtp = smtp_class.return_value.__enter__.return_value
+
+        sent = email_service.send_confirmation_email(registration_data(), 'paid')
+
+        self.assertTrue(sent)
+        smtp_class.assert_called_once_with('smtp.gmail.com', 587, timeout=10)
+        smtp.starttls.assert_called_once_with()
+        smtp.login.assert_called_once_with('sender@example.com', 'app-password')
+        message = smtp.send_message.call_args.args[0]
+        self.assertEqual(message['To'], 'student@example.com')
+        self.assertEqual(message['Reply-To'], 'sender@example.com')
+        self.assertIn('October 17-18', message.get_body(preferencelist=('plain',)).get_content())
+
+    def test_scholarship_confirmation_explains_next_step(self):
+        subject, body, _ = email_service.confirmation_content(
+            registration_data(),
+            'scholarship',
+        )
+
+        self.assertIn('scholarship', subject.lower())
+        self.assertIn('application form', body)
+
+
+class EmailDeliveryFlowTests(unittest.TestCase):
+    def setUp(self):
+        home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
+
+    @patch.object(home, 'update_registration')
+    @patch.object(home, 'send_confirmation_email')
+    @patch.object(home, 'registration_field', return_value='')
+    @patch.object(home, 'email_confirmation_configured', return_value=True)
+    def test_successful_email_is_recorded(
+        self, configured, registration_field, send_email, update_registration
+    ):
+        with home.app.test_request_context('/'):
+            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+
+        send_email.assert_called_once()
+        updates = update_registration.call_args.kwargs
+        self.assertEqual(updates['Confirmation Email Status'], 'Sent')
+        self.assertTrue(updates['Confirmation Email Sent At'])
+
+    @patch.object(home, 'update_registration')
+    @patch.object(home, 'send_confirmation_email')
+    @patch.object(home, 'registration_field', return_value='Sent')
+    @patch.object(home, 'email_confirmation_configured', return_value=True)
+    def test_sent_registration_is_not_emailed_again(
+        self, configured, registration_field, send_email, update_registration
+    ):
+        with home.app.test_request_context('/'):
+            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+
+        send_email.assert_not_called()
+        update_registration.assert_not_called()
+
+    @patch.object(home, 'update_registration')
+    @patch.object(home, 'send_confirmation_email', side_effect=RuntimeError('SMTP unavailable'))
+    @patch.object(home, 'registration_field', return_value='')
+    @patch.object(home, 'email_confirmation_configured', return_value=True)
+    def test_email_failure_does_not_raise_and_is_recorded(
+        self, configured, registration_field, send_email, update_registration
+    ):
+        with home.app.test_request_context('/'), patch.object(home.app.logger, 'exception'):
+            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+
+        update_registration.assert_called_once_with(
+            'registration-123',
+            **{'Confirmation Email Status': 'Failed'},
+        )
 
 
 class RouteTests(unittest.TestCase):
@@ -189,7 +282,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'Please keep this page open.', response.data)
         self.record_registration.assert_not_called()
 
-    def test_scholarship_choice_finishes_without_checkout(self):
+    @patch.object(home, 'send_confirmation_once')
+    def test_scholarship_choice_finishes_without_checkout(self, send_confirmation):
         response = self.client.post(
             '/register', data=registration_data(payment_option='scholarship')
         )
@@ -197,6 +291,12 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertIn(b'href="/">Back to home</a>', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
+        registration_id = self.record_registration.call_args.args[1]
+        send_confirmation.assert_called_once_with(
+            self.record_registration.call_args.args[0],
+            registration_id,
+            'scholarship',
+        )
 
     def test_repeated_form_submission_reuses_registration_id(self):
         html = self.client.get('/register').get_data(as_text=True)
@@ -594,6 +694,38 @@ class SheetTests(unittest.TestCase):
 
         worksheet.update_row.assert_called_once_with(1, google_sheets.REGISTRATION_HEADERS)
 
+    def test_sheet_adds_new_columns_after_custom_columns(self):
+        worksheet = Mock()
+        existing_headers = google_sheets.REGISTRATION_HEADERS[:-2]
+        existing_headers.insert(2, 'Followed Up')
+        worksheet.get_row.return_value = existing_headers
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            google_sheets.registration_worksheet()
+
+        worksheet.update_row.assert_called_once_with(
+            1,
+            existing_headers + google_sheets.REGISTRATION_HEADERS[-2:],
+        )
+
+    def test_sheet_rejects_missing_managed_column(self):
+        worksheet = Mock()
+        headers = google_sheets.REGISTRATION_HEADERS[:]
+        headers.remove('Email')
+        worksheet.get_row.return_value = headers
+        spreadsheet = Mock()
+        spreadsheet.worksheet_by_title.return_value = worksheet
+        sheets_client = Mock()
+        sheets_client.open.return_value = spreadsheet
+
+        with patch.object(google_sheets.pygsheets, 'authorize', return_value=sheets_client):
+            with self.assertRaisesRegex(RuntimeError, 'headers do not match'):
+                google_sheets.registration_worksheet()
+
     def test_sheet_allows_custom_columns_among_registration_headers(self):
         worksheet = Mock()
         headers = google_sheets.REGISTRATION_HEADERS[:]
@@ -644,6 +776,24 @@ class SheetTests(unittest.TestCase):
 
         payment_column = headers.index('Payment Status') + 1
         worksheet.update_value.assert_called_once_with((2, payment_column), 'Paid')
+
+    def test_registration_field_uses_live_header_positions(self):
+        headers = google_sheets.REGISTRATION_HEADERS[:]
+        headers.insert(2, 'Followed Up')
+        worksheet = Mock()
+        worksheet.get_row.return_value = headers
+        worksheet.get_col.return_value = ['Registration ID', 'registration-123']
+        worksheet.get_value.return_value = 'Sent'
+
+        with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
+            value = google_sheets.registration_field(
+                'registration-123',
+                'Confirmation Email Status',
+            )
+
+        self.assertEqual(value, 'Sent')
+        status_column = headers.index('Confirmation Email Status') + 1
+        worksheet.get_value.assert_called_once_with((2, status_column))
 
 
 class PayPalTests(unittest.TestCase):

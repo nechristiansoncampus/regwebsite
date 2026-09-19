@@ -33,6 +33,8 @@ REGISTRATION_HEADERS = [
     'PayPal Capture ID',
     'Paid At',
     'Late Fee',
+    'Confirmation Email Status',
+    'Confirmation Email Sent At',
 ]
 
 
@@ -79,11 +81,6 @@ def registration_worksheet():
     current_headers = worksheet.get_row(1, include_tailing_empty=False)
     if not current_headers:
         worksheet.update_row(1, REGISTRATION_HEADERS)
-    elif (
-        len(current_headers) < len(REGISTRATION_HEADERS)
-        and current_headers == REGISTRATION_HEADERS[:len(current_headers)]
-    ):
-        worksheet.update_row(1, REGISTRATION_HEADERS)
     else:
         missing_headers = [
             header for header in REGISTRATION_HEADERS if header not in current_headers
@@ -91,10 +88,13 @@ def registration_worksheet():
         duplicate_headers = [
             header for header in REGISTRATION_HEADERS if current_headers.count(header) > 1
         ]
-        if missing_headers or duplicate_headers:
+        trailing_headers = REGISTRATION_HEADERS[len(REGISTRATION_HEADERS) - len(missing_headers):]
+        if duplicate_headers or (missing_headers and missing_headers != trailing_headers):
             raise RuntimeError(
                 f'The "{worksheet_title}" worksheet headers do not match the registration form.'
             )
+        if missing_headers:
+            worksheet.update_row(1, current_headers + missing_headers)
 
     return worksheet
 
@@ -150,6 +150,8 @@ def record_registration(registration, registration_id):
         'PayPal Capture ID': registration.get('paypal_capture_id', ''),
         'Paid At': registration.get('paid_at', ''),
         'Late Fee': registration.get('late_fee', ''),
+        'Confirmation Email Status': registration.get('confirmation_email_status', ''),
+        'Confirmation Email Sent At': registration.get('confirmation_email_sent_at', ''),
     }
     worksheet.update_row(
         len(registration_ids) + 1,
@@ -157,7 +159,22 @@ def record_registration(registration, registration_id):
     )
 
 
-def update_registration_payment(registration_id, **updates):
+def registration_field(registration_id, header):
+    worksheet = registration_worksheet()
+    worksheet_headers = worksheet.get_row(1, include_tailing_empty=False)
+    registration_id_column = worksheet_headers.index('Registration ID') + 1
+    registration_ids = worksheet.get_col(
+        registration_id_column,
+        include_tailing_empty=False,
+    )
+    try:
+        row_number = registration_ids.index(registration_id) + 1
+    except ValueError as error:
+        raise RuntimeError('Registration row was not found in Google Sheets.') from error
+    return worksheet.get_value((row_number, worksheet_headers.index(header) + 1))
+
+
+def update_registration(registration_id, **updates):
     worksheet = registration_worksheet()
     worksheet_headers = worksheet.get_row(1, include_tailing_empty=False)
     registration_id_column = worksheet_headers.index('Registration ID') + 1
@@ -173,3 +190,6 @@ def update_registration_payment(registration_id, **updates):
     header_columns = {header: index + 1 for index, header in enumerate(worksheet_headers)}
     for header, value in updates.items():
         worksheet.update_value((row_number, header_columns[header]), value)
+
+
+update_registration_payment = update_registration

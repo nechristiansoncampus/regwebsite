@@ -8,7 +8,8 @@ from datetime import datetime, timezone
 
 import pygsheets
 
-from google_sheets import record_registration
+from email_service import email_confirmation_configured, send_confirmation_email
+from google_sheets import record_registration, registration_field, update_registration
 from paypal_service import PayPalError, capture_order, create_order
 from registration import (
     FULL_TIMER_STATES,
@@ -127,6 +128,11 @@ def register():
                     error='We could not save your registration. Please try again.',
                     registration=registration,
                 )
+            send_confirmation_once(
+                registration,
+                registration_token,
+                'scholarship' if registration['payment_option'] == 'scholarship' else 'no_payment',
+            )
 
         if no_payment:
             return render_template(
@@ -230,8 +236,9 @@ def capture_paypal_order(order_id):
 
 
 def save_paid_registration(registration):
+    registration_id = session.get('registration_token')
     try:
-        record_registration(registration, session.get('registration_token'))
+        record_registration(registration, registration_id)
     except Exception:
         app.logger.exception('Payment completed but registration could not be saved.')
         return jsonify({
@@ -241,6 +248,8 @@ def save_paid_registration(registration):
             ),
             'payment_completed': True,
         }), 500
+
+    send_confirmation_once(registration, registration_id, 'paid')
 
     session['completed_registration'] = {
         'first_name': registration.get('first_name', ''),
@@ -253,6 +262,42 @@ def save_paid_registration(registration):
         'status': 'COMPLETED',
         'redirect_url': url_for('registration_complete'),
     })
+
+
+def send_confirmation_once(registration, registration_id, confirmation_kind):
+    if not email_confirmation_configured():
+        return
+
+    try:
+        if registration_field(registration_id, 'Confirmation Email Status') == 'Sent':
+            return
+    except Exception:
+        app.logger.exception('Unable to check confirmation email status in Google Sheets.')
+        return
+
+    try:
+        send_confirmation_email(registration, confirmation_kind)
+    except Exception:
+        app.logger.exception('Registration succeeded but confirmation email could not be sent.')
+        try:
+            update_registration(
+                registration_id,
+                **{'Confirmation Email Status': 'Failed'},
+            )
+        except Exception:
+            app.logger.exception('Unable to record confirmation email failure in Google Sheets.')
+        return
+
+    try:
+        update_registration(
+            registration_id,
+            **{
+                'Confirmation Email Status': 'Sent',
+                'Confirmation Email Sent At': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+            },
+        )
+    except Exception:
+        app.logger.exception('Confirmation email sent but its status could not be saved.')
 
 
 @app.route('/registration-complete', methods=['get'])
