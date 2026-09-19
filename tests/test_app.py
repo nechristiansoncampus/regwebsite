@@ -462,8 +462,9 @@ class SheetTests(unittest.TestCase):
                 'registration-123',
             )
 
-        row = worksheet.append_table.call_args.kwargs['values']
+        row_number, row = worksheet.update_row.call_args.args
         values = dict(zip(google_sheets.REGISTRATION_HEADERS, row))
+        self.assertEqual(row_number, 2)
         self.assertEqual(len(row), len(google_sheets.REGISTRATION_HEADERS))
         self.assertEqual(values['Registration ID'], 'registration-123')
         self.assertEqual(values['Allergies & Dietary Restrictions'], 'Peanuts')
@@ -478,7 +479,7 @@ class SheetTests(unittest.TestCase):
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.record_registration(registration_data(), 'registration-123')
 
-        worksheet.append_table.assert_not_called()
+        worksheet.update_row.assert_not_called()
 
     def test_payment_update_targets_registration_row(self):
         worksheet = Mock()
@@ -616,13 +617,14 @@ class SheetTests(unittest.TestCase):
         headers.insert(2, 'Followed Up')
         worksheet = Mock()
         worksheet.get_row.return_value = headers
-        worksheet.get_col.return_value = ['Registration ID']
+        worksheet.get_col.return_value = ['Registration ID', 'existing-registration']
 
         with patch.object(google_sheets, 'registration_worksheet', return_value=worksheet):
             google_sheets.record_registration(registration_data(), 'registration-123')
 
-        row = worksheet.append_table.call_args.kwargs['values']
+        row_number, row = worksheet.update_row.call_args.args
         values = dict(zip(headers, row))
+        self.assertEqual(row_number, 3)
         self.assertEqual(values['Registration ID'], 'registration-123')
         self.assertEqual(values['Followed Up'], '')
         self.assertEqual(values['Email'], 'student@example.com')

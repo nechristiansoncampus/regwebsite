@@ -151,9 +151,9 @@ def record_registration(registration, registration_id):
         'Paid At': registration.get('paid_at', ''),
         'Late Fee': registration.get('late_fee', ''),
     }
-    worksheet.append_table(
-        values=[values_by_header.get(header, '') for header in worksheet_headers],
-        start='A1',
+    worksheet.update_row(
+        len(registration_ids) + 1,
+        [values_by_header.get(header, '') for header in worksheet_headers],
     )
 
 
