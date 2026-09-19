@@ -94,32 +94,34 @@ class EmailDeliveryFlowTests(unittest.TestCase):
     def setUp(self):
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
 
+    @patch.object(home.email_executor, 'submit')
     @patch.object(home, 'update_registration')
-    @patch.object(home, 'send_confirmation_email')
     @patch.object(home, 'registration_field', return_value='')
     @patch.object(home, 'email_confirmation_configured', return_value=True)
-    def test_successful_email_is_recorded(
-        self, configured, registration_field, send_email, update_registration
+    def test_email_is_marked_queued_before_background_submission(
+        self, configured, registration_field, update_registration, submit
     ):
         with home.app.test_request_context('/'):
-            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+            home.queue_confirmation_email(registration_data(), 'registration-123', 'paid')
 
-        send_email.assert_called_once()
-        updates = update_registration.call_args.kwargs
-        self.assertEqual(updates['Confirmation Email Status'], 'Sent')
-        self.assertTrue(updates['Confirmation Email Sent At'])
+        update_registration.assert_called_once_with(
+            'registration-123',
+            **{'Confirmation Email Status': 'Queued'},
+        )
+        submit.assert_called_once()
+        self.assertIs(submit.call_args.args[0], home.deliver_confirmation_email)
 
+    @patch.object(home.email_executor, 'submit')
     @patch.object(home, 'update_registration')
-    @patch.object(home, 'send_confirmation_email')
     @patch.object(home, 'registration_field', return_value='Sent')
     @patch.object(home, 'email_confirmation_configured', return_value=True)
-    def test_sent_registration_is_not_emailed_again(
-        self, configured, registration_field, send_email, update_registration
+    def test_sent_registration_is_not_queued_again(
+        self, configured, registration_field, update_registration, submit
     ):
         with home.app.test_request_context('/'):
-            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+            home.queue_confirmation_email(registration_data(), 'registration-123', 'paid')
 
-        send_email.assert_not_called()
+        submit.assert_not_called()
         update_registration.assert_not_called()
 
     @patch.object(home, 'update_registration')
@@ -129,13 +131,22 @@ class EmailDeliveryFlowTests(unittest.TestCase):
     def test_email_failure_does_not_raise_and_is_recorded(
         self, configured, registration_field, send_email, update_registration
     ):
-        with home.app.test_request_context('/'), patch.object(home.app.logger, 'exception'):
-            home.send_confirmation_once(registration_data(), 'registration-123', 'paid')
+        with patch.object(home.app.logger, 'exception'):
+            home.deliver_confirmation_email(registration_data(), 'registration-123', 'paid')
 
         update_registration.assert_called_once_with(
             'registration-123',
             **{'Confirmation Email Status': 'Failed'},
         )
+
+    @patch.object(home, 'update_registration')
+    @patch.object(home, 'send_confirmation_email')
+    def test_successful_background_email_is_recorded(self, send_email, update_registration):
+        home.deliver_confirmation_email(registration_data(), 'registration-123', 'paid')
+
+        updates = update_registration.call_args.kwargs
+        self.assertEqual(updates['Confirmation Email Status'], 'Sent')
+        self.assertTrue(updates['Confirmation Email Sent At'])
 
 
 class RouteTests(unittest.TestCase):
@@ -282,7 +293,7 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'Please keep this page open.', response.data)
         self.record_registration.assert_not_called()
 
-    @patch.object(home, 'send_confirmation_once')
+    @patch.object(home, 'queue_confirmation_email')
     def test_scholarship_choice_finishes_without_checkout(self, send_confirmation):
         response = self.client.post(
             '/register', data=registration_data(payment_option='scholarship')
@@ -290,6 +301,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'scholarship application form', response.data)
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertIn(b'href="/">Back to home</a>', response.data)
+        self.assertIn(b'confirmation email shortly', response.data)
+        self.assertIn(b'mailto:nechristiansoncampus@gmail.com', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
         registration_id = self.record_registration.call_args.args[1]
         send_confirmation.assert_called_once_with(
@@ -874,6 +887,8 @@ class PayPalTests(unittest.TestCase):
         confirmation = self.client.get('/registration-complete')
         self.assertIn(b'You\xe2\x80\x99re registered', confirmation.data)
         self.assertIn(b'See you there, Jamie!', confirmation.data)
+        self.assertIn(b'confirmation email shortly', confirmation.data)
+        self.assertIn(b'mailto:nechristiansoncampus@gmail.com', confirmation.data)
         self.assertIn(b'href="/"', confirmation.data)
 
     @patch.object(home, 'record_registration')

@@ -53,6 +53,11 @@
       line-height:1.6;
     }
 
+    .emailNotice{
+      margin-top:14px;
+      font-size:15px;
+    }
+
     .homeLink{
       display:inline-flex;
       align-items:center;
@@ -74,6 +79,10 @@
   <main class="panel">
     <h1>You’re registered</h1>
     <p>See you there, {{ registration.first_name }}!</p>
+    <p class="emailNotice">
+      You should receive a confirmation email shortly. If you don’t receive it, please contact
+      <a href="mailto:nechristiansoncampus@gmail.com">nechristiansoncampus@gmail.com</a>.
+    </p>
     <a class="homeLink" href="/">Back to home</a>
   </main>
 </body>

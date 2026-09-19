@@ -59,6 +59,8 @@
       line-height:1.6;
     }
 
+    .emailNotice{ margin-top:14px; }
+
     .summary{
       display:grid;
       gap:10px;
@@ -104,6 +106,10 @@
     <p>
       Thanks, {{ registration.first_name }}. We’ll email the scholarship application form and next steps
       to {{ registration.email }}. No payment is needed right now.
+    </p>
+    <p class="emailNotice">
+      You should receive a confirmation email shortly. If you don’t receive it, please contact
+      <a href="mailto:nechristiansoncampus@gmail.com">nechristiansoncampus@gmail.com</a>.
     </p>
 
     <div class="summary">

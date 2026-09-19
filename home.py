@@ -4,6 +4,7 @@ from flask import jsonify, redirect, render_template, request, session, url_for
 import os
 import re
 import secrets
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 import pygsheets
@@ -25,6 +26,7 @@ from registration import (
 )
 
 app = Flask(__name__)
+email_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='confirmation-email')
 
 
 def required_setting(name):
@@ -128,7 +130,7 @@ def register():
                     error='We could not save your registration. Please try again.',
                     registration=registration,
                 )
-            send_confirmation_once(
+            queue_confirmation_email(
                 registration,
                 registration_token,
                 'scholarship' if registration['payment_option'] == 'scholarship' else 'no_payment',
@@ -249,7 +251,7 @@ def save_paid_registration(registration):
             'payment_completed': True,
         }), 500
 
-    send_confirmation_once(registration, registration_id, 'paid')
+    queue_confirmation_email(registration, registration_id, 'paid')
 
     session['completed_registration'] = {
         'first_name': registration.get('first_name', ''),
@@ -264,17 +266,41 @@ def save_paid_registration(registration):
     })
 
 
-def send_confirmation_once(registration, registration_id, confirmation_kind):
+def queue_confirmation_email(registration, registration_id, confirmation_kind):
     if not email_confirmation_configured():
         return
 
     try:
-        if registration_field(registration_id, 'Confirmation Email Status') == 'Sent':
+        email_status = registration_field(registration_id, 'Confirmation Email Status')
+        if email_status in {'Queued', 'Sent'}:
             return
+        update_registration(
+            registration_id,
+            **{'Confirmation Email Status': 'Queued'},
+        )
     except Exception:
-        app.logger.exception('Unable to check confirmation email status in Google Sheets.')
+        app.logger.exception('Unable to queue confirmation email in Google Sheets.')
         return
 
+    try:
+        email_executor.submit(
+            deliver_confirmation_email,
+            registration.copy(),
+            registration_id,
+            confirmation_kind,
+        )
+    except Exception:
+        app.logger.exception('Unable to submit confirmation email background task.')
+        try:
+            update_registration(
+                registration_id,
+                **{'Confirmation Email Status': 'Failed'},
+            )
+        except Exception:
+            app.logger.exception('Unable to record confirmation email failure in Google Sheets.')
+
+
+def deliver_confirmation_email(registration, registration_id, confirmation_kind):
     try:
         send_confirmation_email(registration, confirmation_kind)
     except Exception:

@@ -50,6 +50,8 @@
       line-height:1.6;
     }
 
+    .emailNotice{ margin-top:14px; }
+
     .summary{
       display:grid;
       gap:10px;
@@ -99,6 +101,10 @@
     {% else %}
       <p>Thanks, {{ registration.first_name }}. Your retreat registration is complete. No payment is required.</p>
     {% endif %}
+    <p class="emailNotice">
+      You should receive a confirmation email shortly. If you don’t receive it, please contact
+      <a href="mailto:nechristiansoncampus@gmail.com">nechristiansoncampus@gmail.com</a>.
+    </p>
 
     <div class="summary">
       <div class="row"><span>Name</span><span>{{ registration.first_name }} {{ registration.last_name }}</span></div>
