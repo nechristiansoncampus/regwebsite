@@ -24,6 +24,13 @@ from registration import (
 app = Flask(__name__)
 
 
+def required_setting(name):
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f'{name} must be set.')
+    return value
+
+
 def load_local_env():
     env_path = os.path.join(app.root_path, '.env')
     if not os.path.exists(env_path):
@@ -43,7 +50,7 @@ def load_local_env():
 
 load_local_env()
 
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-me')
+app.secret_key = required_setting('FLASK_SECRET_KEY')
 
 
 @app.context_processor
