@@ -89,6 +89,15 @@ class EmailConfirmationTests(unittest.TestCase):
         self.assertIn('scholarship', subject.lower())
         self.assertIn('application form', body)
 
+    def test_ccsu_confirmation_explains_payment_contact(self):
+        _, body, _ = email_service.confirmation_content(
+            registration_data(campus='CCSU'),
+            'ccsu',
+        )
+
+        self.assertIn('contact Charles Savona', body)
+        self.assertIn('payment and other details regarding the retreat', body)
+
 
 class EmailDeliveryFlowTests(unittest.TestCase):
     def setUp(self):
@@ -160,8 +169,11 @@ class RouteTests(unittest.TestCase):
         self.client = home.app.test_client()
         self.sheet_patcher = patch.object(home, 'record_registration')
         self.record_registration = self.sheet_patcher.start()
+        self.email_queue_patcher = patch.object(home, 'queue_confirmation_email')
+        self.queue_confirmation_email = self.email_queue_patcher.start()
 
     def tearDown(self):
+        self.email_queue_patcher.stop()
         self.sheet_patcher.stop()
         self.late_fee_patcher.stop()
 
@@ -293,8 +305,7 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'Please keep this page open.', response.data)
         self.record_registration.assert_not_called()
 
-    @patch.object(home, 'queue_confirmation_email')
-    def test_scholarship_choice_finishes_without_checkout(self, send_confirmation):
+    def test_scholarship_choice_finishes_without_checkout(self):
         response = self.client.post(
             '/register', data=registration_data(payment_option='scholarship')
         )
@@ -305,7 +316,7 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'mailto:nechristiansoncampus@gmail.com', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
         registration_id = self.record_registration.call_args.args[1]
-        send_confirmation.assert_called_once_with(
+        self.queue_confirmation_email.assert_called_once_with(
             self.record_registration.call_args.args[0],
             registration_id,
             'scholarship',
@@ -425,6 +436,23 @@ class RouteTests(unittest.TestCase):
                 )
                 self.assertIn(b'Charles Savona', response.data)
                 self.assertIn(b'href="/">Back to home</a>', response.data)
+
+    def test_ccsu_registration_queues_ccsu_confirmation(self):
+        self.client.post(
+            '/register',
+            data=registration_data(
+                campus='CCSU',
+                payment_option='',
+                attended_before='',
+            ),
+        )
+
+        registration_id = self.record_registration.call_args.args[1]
+        self.queue_confirmation_email.assert_called_once_with(
+            self.record_registration.call_args.args[0],
+            registration_id,
+            'ccsu',
+        )
 
     def test_other_school_is_normalized_before_recording(self):
         self.client.post(
@@ -818,8 +846,11 @@ class PayPalTests(unittest.TestCase):
         self.late_fee_patcher.start()
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
         self.client = home.app.test_client()
+        self.email_queue_patcher = patch.object(home, 'queue_confirmation_email')
+        self.queue_confirmation_email = self.email_queue_patcher.start()
 
     def tearDown(self):
+        self.email_queue_patcher.stop()
         self.late_fee_patcher.stop()
 
     def set_registration_session(self, registration=None, paypal_order_id=None):

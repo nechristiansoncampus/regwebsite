@@ -133,7 +133,11 @@ def register():
             queue_confirmation_email(
                 registration,
                 registration_token,
-                'scholarship' if registration['payment_option'] == 'scholarship' else 'no_payment',
+                (
+                    'scholarship'
+                    if registration['payment_option'] == 'scholarship'
+                    else 'ccsu' if is_ccsu(registration) else 'no_payment'
+                ),
             )
 
         if no_payment:

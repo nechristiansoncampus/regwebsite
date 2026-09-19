@@ -20,6 +20,12 @@ def confirmation_content(registration, confirmation_kind):
             'We received your retreat registration and scholarship request. '
             'We will email you with the scholarship application form. No payment is needed right now.'
         )
+    elif confirmation_kind == 'ccsu':
+        subject = 'Your fall retreat registration is confirmed'
+        detail = (
+            'Your retreat registration is complete. Please contact Charles Savona concerning '
+            'payment and other details regarding the retreat.'
+        )
     elif confirmation_kind == 'paid':
         subject = 'Your fall retreat registration is confirmed'
         detail = 'Your payment was received and your retreat registration is complete.'
