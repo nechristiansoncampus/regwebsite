@@ -178,6 +178,9 @@ class RouteTests(unittest.TestCase):
     def test_returning_attendee_reaches_checkout(self):
         response = self.client.post('/register', data=registration_data())
         self.assertIn(b'<h1>Checkout</h1>', response.data)
+        self.assertIn(b'id="payment-processing"', response.data)
+        self.assertIn(b'Finalizing your registration', response.data)
+        self.assertIn(b'Please keep this page open.', response.data)
         self.record_registration.assert_not_called()
 
     def test_scholarship_choice_finishes_without_checkout(self):
