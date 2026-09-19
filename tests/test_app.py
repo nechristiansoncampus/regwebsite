@@ -118,7 +118,7 @@ class RouteTests(unittest.TestCase):
         self.assertNotIn('games, snow, and snacks.', html)
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
-        self.assertIn('background: #9a3412;', html)
+        self.assertIn('rgba(245,190,112,.88)', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
 
     def test_required_fields_are_validated(self):
