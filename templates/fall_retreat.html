@@ -513,9 +513,24 @@
     .btn:hover{ background: rgba(255,255,255,.86); }
 
     .btnPrimary{
-      border: 1px solid rgba(180,83,9,.26);
-      background: linear-gradient(90deg, rgba(180,83,9,.16), rgba(245,158,11,.17), rgba(21,128,61,.10));
-      box-shadow: 0 16px 40px rgba(180,83,9,.13);
+      border: 1px solid #7c2d12;
+      background: #9a3412;
+      color: #fff;
+      font-weight: 800;
+      box-shadow:
+        0 14px 30px rgba(124,45,18,.30),
+        0 1px 0 rgba(255,255,255,.22) inset;
+    }
+    .btnPrimary:hover{
+      background: #7c2d12;
+      box-shadow:
+        0 17px 34px rgba(124,45,18,.34),
+        0 1px 0 rgba(255,255,255,.22) inset;
+      transform: translateY(-1px);
+    }
+    .btnPrimary:focus-visible{
+      outline: 3px solid rgba(245,158,11,.48);
+      outline-offset: 3px;
     }
     .btnPrimary::after{
       content:"";
