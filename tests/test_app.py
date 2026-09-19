@@ -180,27 +180,29 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
-    def test_massachusetts_full_timer_status_skips_payment(self):
-        for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
-            with self.subTest(status=status):
-                response = self.client.post(
-                    '/register',
-                    data=registration_data(
-                        school_state='Massachusetts',
-                        status='Other',
-                        status_other=status,
-                        payment_option='',
-                        attended_before='',
-                        transportation='I need a ride',
-                    ),
-                )
-                self.assertIn(b'No payment is required.', response.data)
-                recorded = self.record_registration.call_args.args[0]
-                self.assertEqual(recorded['payment_option'], 'not_required')
-                self.record_registration.reset_mock()
+    def test_eligible_state_full_timer_status_skips_payment(self):
+        for state in ['Massachusetts', 'New Hampshire']:
+            for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
+                with self.subTest(state=state, status=status):
+                    transportation = 'I need a ride' if state == 'Massachusetts' else ''
+                    response = self.client.post(
+                        '/register',
+                        data=registration_data(
+                            school_state=state,
+                            status='Other',
+                            status_other=status,
+                            payment_option='',
+                            attended_before='',
+                            transportation=transportation,
+                        ),
+                    )
+                    self.assertIn(b'No payment is required.', response.data)
+                    recorded = self.record_registration.call_args.args[0]
+                    self.assertEqual(recorded['payment_option'], 'not_required')
+                    self.record_registration.reset_mock()
 
-    def test_full_timer_outside_massachusetts_still_pays(self):
-        for state in ['Connecticut', 'New Hampshire', 'Rhode Island', 'Vermont']:
+    def test_full_timer_outside_eligible_states_still_pays(self):
+        for state in ['Connecticut', 'Rhode Island', 'Vermont']:
             with self.subTest(state=state):
                 response = self.client.post(
                     '/register',

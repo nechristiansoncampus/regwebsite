@@ -150,11 +150,11 @@ def is_ccsu(registration):
 
 
 def payment_not_required(registration):
-    is_ma_full_timer = (
-        registration.get('school_state') == 'Massachusetts'
+    is_eligible_full_timer = (
+        registration.get('school_state') in {'Massachusetts', 'New Hampshire'}
         and is_full_timer(registration)
     )
-    return is_ccsu(registration) or is_ma_full_timer
+    return is_ccsu(registration) or is_eligible_full_timer
 
 
 def initial_payment_status(registration):

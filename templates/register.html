@@ -722,7 +722,8 @@
     }
 
     function paymentNotRequired() {
-      return isCcsu() || (selectedSchoolState() === 'Massachusetts' && isFullTimer());
+      const fullTimerStates = ['Massachusetts', 'New Hampshire'];
+      return isCcsu() || (fullTimerStates.includes(selectedSchoolState()) && isFullTimer());
     }
 
     function activePages() {
