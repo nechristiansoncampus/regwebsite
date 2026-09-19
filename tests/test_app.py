@@ -26,7 +26,6 @@ def registration_data(**overrides):
         'transportation_other': '',
         'car_capacity': '',
         'payment_option': 'pay_full',
-        'promo_code': '',
         'attended_before': 'yes',
         'allergies': '',
         'comments': '',
@@ -181,28 +180,38 @@ class RouteTests(unittest.TestCase):
         self.assertIn(b'No payment is needed right now.', response.data)
         self.assertNotIn(b'Pay with PayPal', response.data)
 
-    def test_full_timer_status_does_not_skip_payment(self):
-        for status in ['full-timer', 'Full Timer', 'FT']:
+    def test_massachusetts_full_timer_status_skips_payment(self):
+        for status in ['full-timer', 'Full Timer', 'FT', 'F/T', 'fulltimer']:
             with self.subTest(status=status):
                 response = self.client.post(
                     '/register',
                     data=registration_data(
+                        school_state='Massachusetts',
                         status='Other',
                         status_other=status,
                         payment_option='',
                         attended_before='',
+                        transportation='I need a ride',
                     ),
                 )
-                self.assertIn(b'Please choose a payment option.', response.data)
+                self.assertIn(b'No payment is required.', response.data)
+                recorded = self.record_registration.call_args.args[0]
+                self.assertEqual(recorded['payment_option'], 'not_required')
+                self.record_registration.reset_mock()
 
-    def test_promo_code_is_only_shown_at_checkout(self):
-        registration_page = self.client.get('/register').get_data(as_text=True)
-        checkout_page = self.client.post(
-            '/register', data=registration_data()
-        ).get_data(as_text=True)
-
-        self.assertNotIn('Have a promo code?', registration_page)
-        self.assertIn('Have a promo code?', checkout_page)
+    def test_full_timer_outside_massachusetts_still_pays(self):
+        for state in ['Connecticut', 'New Hampshire', 'Rhode Island', 'Vermont']:
+            with self.subTest(state=state):
+                response = self.client.post(
+                    '/register',
+                    data=registration_data(
+                        school_state=state,
+                        status='Other',
+                        status_other='FT',
+                    ),
+                )
+                self.assertIn(b'<h1>Checkout</h1>', response.data)
+                self.record_registration.assert_not_called()
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_other_status_skips_attendance_question_without_discount(self):
@@ -286,10 +295,17 @@ class RegistrationRuleTests(unittest.TestCase):
             with self.subTest(campus=campus):
                 self.assertFalse(registration.is_ccsu({'campus': campus}))
 
-    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
-    def test_payment_waiver_code_is_case_insensitive(self):
-        self.assertTrue(registration.has_payment_waiver_code({'promo_code': 'gba-ft'}))
-        self.assertFalse(registration.has_payment_waiver_code({'promo_code': 'wrong'}))
+    def test_full_timer_status_matching_is_deliberately_narrow(self):
+        for status in ['FT', 'F/T', 'full-time', 'full timer', 'fulltimer']:
+            with self.subTest(status=status):
+                self.assertTrue(registration.is_full_timer({
+                    'status_is_other': True,
+                    'status_other': status,
+                }))
+        self.assertFalse(registration.is_full_timer({
+            'status_is_other': True,
+            'status_other': 'full-time student',
+        }))
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_registration_amount(self):
@@ -471,57 +487,6 @@ class PayPalTests(unittest.TestCase):
         response = self.client.post('/api/paypal/orders')
         self.assertEqual(response.status_code, 400)
         self.assertIn('Payment is not required', response.get_json()['error'])
-
-    def test_promo_code_requires_registration(self):
-        response = self.client.post('/api/promo-code', json={'promo_code': 'GBA-FT'})
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Registration is required', response.get_json()['error'])
-
-    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
-    @patch.object(home, 'record_registration')
-    def test_valid_promo_code_completes_registration(self, record_registration):
-        self.set_registration_session()
-
-        response = self.client.post('/api/promo-code', json={'promo_code': 'gba-ft'})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json()['redirect_url'], '/registration-complete')
-        recorded, registration_id = record_registration.call_args.args
-        self.assertEqual(registration_id, 'registration-123')
-        self.assertEqual(recorded['promo_code'], 'gba-ft')
-        self.assertEqual(recorded['payment_option'], 'not_required')
-        self.assertEqual(recorded['payment_status'], 'Not required')
-        self.assertEqual(recorded['amount_due'], '')
-        with self.client.session_transaction() as session:
-            self.assertNotIn('registration', session)
-            self.assertEqual(session['completed_registration']['first_name'], 'Jamie')
-
-    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
-    @patch.object(home, 'record_registration')
-    def test_invalid_promo_code_keeps_checkout_pending(self, record_registration):
-        self.set_registration_session()
-
-        response = self.client.post('/api/promo-code', json={'promo_code': 'WRONG'})
-
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.get_json()['error'], 'That promo code is not valid.')
-        record_registration.assert_not_called()
-        with self.client.session_transaction() as session:
-            self.assertEqual(session['registration']['promo_code'], '')
-
-    @patch.dict(os.environ, {'RETREAT_PAYMENT_WAIVER_CODE': 'GBA-FT'}, clear=False)
-    @patch.object(home, 'record_registration', side_effect=RuntimeError('Google unavailable'))
-    def test_promo_code_sheet_failure_can_be_retried(self, record_registration):
-        self.set_registration_session()
-
-        with patch.object(home.app.logger, 'exception'):
-            response = self.client.post('/api/promo-code', json={'promo_code': 'GBA-FT'})
-
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('could not save', response.get_json()['error'])
-        with self.client.session_transaction() as session:
-            self.assertIn('registration', session)
 
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     @patch.object(home, 'create_order')

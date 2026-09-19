@@ -715,8 +715,14 @@
       return compactCampus === 'ccsu' || /\bcentral\s+(?:connecticut|conn|ct)\s+state(?:\s+(?:university|univ|college))?\b/.test(normalizedCampus);
     }
 
+    function isFullTimer() {
+      if (!isOtherStatus()) return false;
+      const compactStatus = statusOtherInput.value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      return ['ft', 'fulltime', 'fulltimer'].includes(compactStatus);
+    }
+
     function paymentNotRequired() {
-      return isCcsu();
+      return isCcsu() || (selectedSchoolState() === 'Massachusetts' && isFullTimer());
     }
 
     function activePages() {
@@ -782,7 +788,7 @@
       otherStateWrap.classList.toggle('isVisible', isOther);
       otherStateInput.required = isOther;
       updateTransportationRequirements();
-      updateStep();
+      updatePaymentRequirements();
     }
 
     function updateTransportationRequirements() {
