@@ -393,6 +393,7 @@ class SheetTests(unittest.TestCase):
     def tearDown(self):
         self.late_fee_patcher.stop()
 
+    @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     def test_record_registration_writes_every_column(self):
         worksheet = Mock()
         worksheet.get_col.return_value = ['Registration ID']

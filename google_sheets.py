@@ -90,34 +90,40 @@ def record_registration(registration, registration_id):
     if registration.get('payment_option') == 'pay_full' and not amount_due:
         amount_due = registration_amount(registration)
 
-    worksheet.append_table(values=[
-        registration_id,
-        datetime.now(timezone.utc).isoformat(timespec='seconds'),
-        registration.get('email', ''),
-        registration.get('first_name', ''),
-        registration.get('last_name', ''),
-        registration.get('phone', ''),
-        registration.get('gender', ''),
-        registration.get('campus', ''),
-        registration.get('campus_other', ''),
-        registration.get('school_state', ''),
-        registration.get('school_state_other', ''),
-        registration.get('status', ''),
-        registration.get('status_other', ''),
-        registration.get('allergies', ''),
-        registration.get('comments', ''),
-        registration.get('transportation', ''),
-        registration.get('transportation_other', ''),
-        registration.get('car_capacity', ''),
-        registration.get('payment_option', ''),
-        first_time,
-        amount_due,
-        registration.get('payment_status') or initial_payment_status(registration),
-        registration.get('paypal_order_id', ''),
-        registration.get('paypal_capture_id', ''),
-        registration.get('paid_at', ''),
-        registration.get('late_fee', ''),
-    ], start='A1')
+    values_by_header = {
+        'Registration ID': registration_id,
+        'Submitted At': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+        'Email': registration.get('email', ''),
+        'First Name': registration.get('first_name', ''),
+        'Last Name': registration.get('last_name', ''),
+        'Phone': registration.get('phone', ''),
+        'Gender': registration.get('gender', ''),
+        'College or University': registration.get('campus', ''),
+        'Other College or University': registration.get('campus_other', ''),
+        'School State': registration.get('school_state', ''),
+        'Other School State': registration.get('school_state_other', ''),
+        'Status': registration.get('status', ''),
+        'Other Status': registration.get('status_other', ''),
+        'Allergies & Dietary Restrictions': registration.get('allergies', ''),
+        'Comments': registration.get('comments', ''),
+        'Transportation': registration.get('transportation', ''),
+        'Other Transportation': registration.get('transportation_other', ''),
+        'Car Capacity': registration.get('car_capacity', ''),
+        'Payment Option': registration.get('payment_option', ''),
+        'First-Time Attendee': first_time,
+        'Amount Due': amount_due,
+        'Payment Status': (
+            registration.get('payment_status') or initial_payment_status(registration)
+        ),
+        'PayPal Order ID': registration.get('paypal_order_id', ''),
+        'PayPal Capture ID': registration.get('paypal_capture_id', ''),
+        'Paid At': registration.get('paid_at', ''),
+        'Late Fee': registration.get('late_fee', ''),
+    }
+    worksheet.append_table(
+        values=[values_by_header[header] for header in REGISTRATION_HEADERS],
+        start='A1',
+    )
 
 
 def update_registration_payment(registration_id, **updates):
