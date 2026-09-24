@@ -245,6 +245,11 @@ class RouteTests(unittest.TestCase):
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
+        self.assertIn('src="/static/img/fall_retreat_promo.mp4"', html)
+        self.assertIn('data-src="/static/img/describe-retreat.mp4"', html)
+        self.assertIn('preload="none"', html)
+        testimonial_video = html.split('id="reel2"', 1)[1].split('>', 1)[0]
+        self.assertNotIn('\n              src=', testimonial_video)
 
     def test_required_fields_are_validated(self):
         response = self.client.post('/register', data=registration_data(email=''))
