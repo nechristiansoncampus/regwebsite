@@ -26,6 +26,35 @@ const revealObserver = new IntersectionObserver((entries) => {
 revealEls.forEach(element => revealObserver.observe(element));
 
 document.addEventListener('DOMContentLoaded', () => {
+  function initLazyVideo(videoId) {
+    const video = document.getElementById(videoId);
+    if (!video || !video.dataset.src) return;
+
+    const loadVideo = () => {
+      video.src = video.dataset.src;
+      delete video.dataset.src;
+      video.load();
+      video.play().catch(() => {});
+    };
+
+    if (!('IntersectionObserver' in window)) {
+      loadVideo();
+      return;
+    }
+
+    const videoObserver = new IntersectionObserver((entries, observer) => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      loadVideo();
+    }, {
+      root: scroller,
+      rootMargin: '400px 0px',
+      threshold: 0
+    });
+
+    videoObserver.observe(video);
+  }
+
   function initSoundToggle(videoId, toggleId) {
     const video = document.getElementById(videoId);
     const toggle = document.getElementById(toggleId);
@@ -71,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  initLazyVideo('reel2');
   initSoundToggle('heroVideo', 'soundToggle');
   initSoundToggle('reel2', 'soundToggle2');
 });
