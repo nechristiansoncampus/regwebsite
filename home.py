@@ -58,6 +58,14 @@ load_local_env()
 app.secret_key = required_setting('FLASK_SECRET_KEY')
 
 
+@app.after_request
+def cache_video_responses(response):
+    if request.path.lower().endswith('.mp4') and response.status_code in {200, 206}:
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+        response.headers['CDN-Cache-Control'] = 'public, max-age=604800'
+    return response
+
+
 @app.context_processor
 def registration_config():
     return {
