@@ -251,6 +251,20 @@ class RouteTests(unittest.TestCase):
         testimonial_video = html.split('id="reel2"', 1)[1].split('>', 1)[0]
         self.assertNotIn('\n              src=', testimonial_video)
 
+    def test_video_responses_are_cacheable_at_the_edge(self):
+        response = self.client.get(
+            '/static/img/fall_retreat_promo.mp4',
+            headers={'Range': 'bytes=0-1023'},
+        )
+
+        self.assertEqual(response.status_code, 206)
+        self.assertEqual(response.headers['Cache-Control'], 'public, max-age=86400')
+        self.assertEqual(
+            response.headers['CDN-Cache-Control'],
+            'public, max-age=604800',
+        )
+        response.close()
+
     def test_required_fields_are_validated(self):
         response = self.client.post('/register', data=registration_data(email=''))
         self.assertIn(b'Please fill out every field.', response.data)
