@@ -76,6 +76,7 @@ class EmailConfirmationTests(unittest.TestCase):
         smtp.starttls.assert_called_once_with()
         smtp.login.assert_called_once_with('sender@example.com', 'app-password')
         message = smtp.send_message.call_args.args[0]
+        self.assertEqual(message['Subject'], 'Your Fall Retreat Registration Is Confirmed')
         self.assertEqual(message['To'], 'student@example.com')
         self.assertEqual(message['Reply-To'], 'sender@example.com')
         self.assertIn('October 17-18', message.get_body(preferencelist=('plain',)).get_content())
@@ -86,7 +87,7 @@ class EmailConfirmationTests(unittest.TestCase):
             'scholarship',
         )
 
-        self.assertIn('scholarship', subject.lower())
+        self.assertEqual(subject, 'Retreat Scholarship Request Received')
         self.assertIn('application form', body)
 
     def test_ccsu_confirmation_explains_payment_contact(self):

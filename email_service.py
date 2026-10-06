@@ -15,22 +15,22 @@ def email_confirmation_configured():
 def confirmation_content(registration, confirmation_kind):
     first_name = registration.get('first_name', 'there')
     if confirmation_kind == 'scholarship':
-        subject = 'Retreat scholarship request received'
+        subject = 'Retreat Scholarship Request Received'
         detail = (
             'We received your retreat registration and scholarship request. '
             'We will email you with the scholarship application form. No payment is needed right now.'
         )
     elif confirmation_kind == 'ccsu':
-        subject = 'Your fall retreat registration is confirmed'
+        subject = 'Your Fall Retreat Registration Is Confirmed'
         detail = (
             'Your retreat registration is complete. Please contact Charles Savona concerning '
             'payment and other details regarding the retreat.'
         )
     elif confirmation_kind == 'paid':
-        subject = 'Your fall retreat registration is confirmed'
+        subject = 'Your Fall Retreat Registration Is Confirmed'
         detail = 'Your payment was received and your retreat registration is complete.'
     else:
-        subject = 'Your fall retreat registration is confirmed'
+        subject = 'Your Fall Retreat Registration Is Confirmed'
         detail = 'Your retreat registration is complete. No payment is required.'
 
     body = (
