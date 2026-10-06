@@ -252,6 +252,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
+        self.assertIn('Registration deadline: October 11', html)
+        self.assertIn('A $10 late fee applies beginning October 12.', html)
         self.assertIn('src="/static/img/fall_retreat_promo.mp4"', html)
         self.assertIn('data-src="/static/img/describe-retreat.mp4"', html)
         self.assertIn('preload="none"', html)
