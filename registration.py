@@ -80,7 +80,7 @@ def validate_registration(registration):
 def late_fee_amount(now=None):
     cutoff_text = os.environ.get(
         'RETREAT_LATE_FEE_START',
-        '2026-10-10T00:00:00-04:00',
+        '2026-10-12T00:00:00-04:00',
     )
     if not cutoff_text:
         return Decimal('0.00')
