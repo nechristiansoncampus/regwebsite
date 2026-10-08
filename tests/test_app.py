@@ -228,8 +228,10 @@ class RouteTests(unittest.TestCase):
     def test_registration_page_shows_deadline_and_late_fee_date(self):
         html = self.client.get('/register').get_data(as_text=True)
 
-        self.assertIn('<dd class="deadlineValue">October 11</dd>', html)
-        self.assertIn('<dd class="lateFeeValue">$10 beginning October 12</dd>', html)
+        self.assertEqual(html.count('class="registrationTimingItem deadline"'), 1)
+        self.assertEqual(html.count('class="registrationTimingItem lateFee"'), 1)
+        self.assertIn('Registration deadline</span>\n          October 11', html)
+        self.assertIn('Late fee</span>\n          $10 beginning October 12', html)
         self.assertIn('I’ll pay for my registration now.', html)
 
     def test_contact_fields_expose_accessible_validation_contract(self):

@@ -86,25 +86,45 @@
       font-weight:400;
     }
 
-    .deadlineLabel{
-      color:#3f6f46 !important;
-    }
-
-    .lateFeeLabel{
-      color:#a5530b !important;
-    }
-
-    .deadlineValue,
-    .lateFeeValue{
+    .registrationTiming{
+      max-width:720px;
+      margin:12px 0 0;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:8px;
       font-size:14px;
+      line-height:1.4;
     }
 
-    .deadlineValue{
-      color:#527259;
+    .registrationTimingItem{
+      padding:9px 11px;
+      border-left:3px solid;
+      border-radius:0 6px 6px 0;
     }
 
-    .lateFeeValue{
-      color:#8a5a2b;
+    .registrationTimingItem.deadline{
+      border-color:#6f9b63;
+      background:rgba(111,155,99,.12);
+      color:#49664a;
+    }
+
+    .registrationTimingItem.lateFee{
+      border-color:#d97706;
+      background:rgba(245,158,11,.12);
+      color:#85501e;
+    }
+
+    .registrationTimingLabel{
+      display:block;
+      margin-bottom:2px;
+      color:var(--ink);
+      font-weight:700;
+    }
+
+    @media (max-width: 480px){
+      .registrationTiming{
+        grid-template-columns:1fr;
+      }
     }
 
     .panel{
@@ -444,11 +464,17 @@
           <span class="costAmount">${{ registration_amount_display }}</span>
           <span class="discount">First-time student attendees get 50% off</span>
         </dd>
-        <dt class="deadlineLabel">Deadline</dt>
-        <dd class="deadlineValue">October 11</dd>
-        <dt class="lateFeeLabel">Late fee</dt>
-        <dd class="lateFeeValue">$10 beginning October 12</dd>
       </dl>
+      <div class="registrationTiming" aria-label="Registration deadline and late fee">
+        <div class="registrationTimingItem deadline">
+          <span class="registrationTimingLabel">Registration deadline</span>
+          October 11
+        </div>
+        <div class="registrationTimingItem lateFee">
+          <span class="registrationTimingLabel">Late fee</span>
+          $10 beginning October 12
+        </div>
+      </div>
     </header>
 
     <section class="panel">
