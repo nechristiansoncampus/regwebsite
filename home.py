@@ -75,6 +75,32 @@ def registration_config():
     }
 
 
+def render_registration_form(registration=None, error=None):
+    return render_template(
+        'register.html',
+        error=error,
+        registration=registration,
+    )
+
+
+def render_checkout(registration):
+    return render_template(
+        'checkout.html',
+        registration=registration,
+        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
+        amount=registration.get('amount_due') or registration_amount(registration),
+        late_fee=registration.get('late_fee', ''),
+    )
+
+
+def confirmation_kind(registration):
+    if registration['payment_option'] == 'scholarship':
+        return 'scholarship'
+    if is_ccsu(registration):
+        return 'ccsu'
+    return 'no_payment'
+
+
 @app.route("/", methods=['post', 'get'])
 def home():
     return render_template('fall_retreat.html')
@@ -98,16 +124,14 @@ def register():
         elif app.testing and not form_token:
             registration_token = secrets.token_urlsafe(16)
         else:
-            return render_template(
-                'register.html',
+            return render_registration_form(
                 error='This registration form expired. Please refresh the page and try again.',
                 registration=registration,
             )
 
         validation_error = validate_registration(registration)
         if validation_error:
-            return render_template(
-                'register.html',
+            return render_registration_form(
                 error=validation_error,
                 registration=registration,
             )
@@ -133,19 +157,14 @@ def register():
                 record_registration(registration, registration_token)
             except Exception:
                 app.logger.exception('Unable to save registration to Google Sheets.')
-                return render_template(
-                    'register.html',
+                return render_registration_form(
                     error='We could not save your registration. Please try again.',
                     registration=registration,
                 )
             queue_confirmation_email(
                 registration,
                 registration_token,
-                (
-                    'scholarship'
-                    if registration['payment_option'] == 'scholarship'
-                    else 'ccsu' if is_ccsu(registration) else 'no_payment'
-                ),
+                confirmation_kind(registration),
             )
 
         if no_payment:
@@ -158,13 +177,7 @@ def register():
         if registration['payment_option'] == 'scholarship':
             return render_template('scholarship_confirmation.html', registration=registration)
 
-        return render_template(
-            'checkout.html',
-            registration=registration,
-            paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-            amount=registration['amount_due'],
-            late_fee=registration['late_fee'],
-        )
+        return render_checkout(registration)
 
     session['registration_form_token'] = secrets.token_urlsafe(16)
     return render_template('register.html')
@@ -173,7 +186,7 @@ def register():
 def checkout():
     registration = session.get('registration')
     if not registration:
-        return render_template('register.html', error='Please register before checking out.')
+        return render_registration_form(error='Please register before checking out.')
 
     if payment_not_required(registration):
         return render_template(
@@ -182,13 +195,7 @@ def checkout():
             ccsu_registration=is_ccsu(registration),
         )
 
-    return render_template(
-        'checkout.html',
-        registration=registration,
-        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-        amount=registration.get('amount_due') or registration_amount(registration),
-        late_fee=registration.get('late_fee', ''),
-    )
+    return render_checkout(registration)
 
 
 @app.route("/api/paypal/orders", methods=['post'])

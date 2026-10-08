@@ -159,8 +159,7 @@ def record_registration(registration, registration_id):
     )
 
 
-def registration_field(registration_id, header):
-    worksheet = registration_worksheet()
+def registration_row(worksheet, registration_id):
     worksheet_headers = worksheet.get_row(1, include_tailing_empty=False)
     registration_id_column = worksheet_headers.index('Registration ID') + 1
     registration_ids = worksheet.get_col(
@@ -171,21 +170,18 @@ def registration_field(registration_id, header):
         row_number = registration_ids.index(registration_id) + 1
     except ValueError as error:
         raise RuntimeError('Registration row was not found in Google Sheets.') from error
+    return worksheet_headers, row_number
+
+
+def registration_field(registration_id, header):
+    worksheet = registration_worksheet()
+    worksheet_headers, row_number = registration_row(worksheet, registration_id)
     return worksheet.get_value((row_number, worksheet_headers.index(header) + 1))
 
 
 def update_registration(registration_id, **updates):
     worksheet = registration_worksheet()
-    worksheet_headers = worksheet.get_row(1, include_tailing_empty=False)
-    registration_id_column = worksheet_headers.index('Registration ID') + 1
-    registration_ids = worksheet.get_col(
-        registration_id_column,
-        include_tailing_empty=False,
-    )
-    try:
-        row_number = registration_ids.index(registration_id) + 1
-    except ValueError as error:
-        raise RuntimeError('Registration row was not found in Google Sheets.') from error
+    worksheet_headers, row_number = registration_row(worksheet, registration_id)
 
     header_columns = {header: index + 1 for index, header in enumerate(worksheet_headers)}
     for header, value in updates.items():
