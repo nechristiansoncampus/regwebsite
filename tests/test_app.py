@@ -225,6 +225,15 @@ class RouteTests(unittest.TestCase):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('<span class="costAmount">$149.50</span>', html)
 
+    def test_registration_page_shows_deadline_and_late_fee_date(self):
+        html = self.client.get('/register').get_data(as_text=True)
+
+        self.assertEqual(html.count('class="registrationTimingItem deadline"'), 1)
+        self.assertEqual(html.count('class="registrationTimingItem lateFee"'), 1)
+        self.assertIn('Registration deadline</span>\n          October 11', html)
+        self.assertIn('Late fee</span>\n          $10 beginning October 12', html)
+        self.assertIn('I’ll pay for my registration now.', html)
+
     def test_contact_fields_expose_accessible_validation_contract(self):
         html = self.client.get('/register').get_data(as_text=True)
         self.assertIn('id="emailError" class="fieldError" role="alert" hidden', html)
@@ -246,6 +255,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
+        self.assertIn('class="registrationTimingItem deadline"', html)
+        self.assertIn('class="registrationTimingItem lateFee"', html)
         self.assertIn('src="/static/img/fall_retreat_promo.mp4"', html)
         self.assertIn('data-src="/static/img/describe-retreat.mp4"', html)
         self.assertIn('preload="none"', html)
@@ -558,12 +569,14 @@ class RegistrationRuleTests(unittest.TestCase):
         {
             'RETREAT_REGISTRATION_AMOUNT': '125.00',
             'RETREAT_LATE_FEE_AMOUNT': '10.00',
-            'RETREAT_LATE_FEE_START': '2026-10-10T00:00:00-04:00',
+            'RETREAT_LATE_FEE_START': '2026-10-12T00:00:00-04:00',
         },
         clear=False,
     )
     def test_late_fee_starts_at_midnight_eastern_after_discount(self):
-        at_cutoff = datetime(2026, 10, 10, 4, 0, 0, tzinfo=timezone.utc)
+        before_cutoff = datetime(2026, 10, 12, 3, 59, 59, tzinfo=timezone.utc)
+        at_cutoff = datetime(2026, 10, 12, 4, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(registration.late_fee_amount(before_cutoff), 0)
         self.assertEqual(registration.late_fee_amount(at_cutoff), 10)
         self.assertEqual(
             registration.registration_amount({'attended_before': 'yes'}, at_cutoff),

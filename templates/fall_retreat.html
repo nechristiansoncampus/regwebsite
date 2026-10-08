@@ -928,6 +928,46 @@
       white-space: nowrap;
     }
 
+    .registrationTiming{
+      margin:14px 0 18px;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:10px;
+      font-size:14px;
+      line-height:1.4;
+    }
+
+    .registrationTimingItem{
+      padding:9px 11px;
+      border-left:3px solid;
+      border-radius:0 6px 6px 0;
+    }
+
+    .registrationTimingItem.deadline{
+      border-color:#4589ff;
+      background:rgba(69,137,255,.10);
+      color:#294c71;
+    }
+
+    .registrationTimingItem.lateFee{
+      border-color:#d97706;
+      background:rgba(245,158,11,.10);
+      color:#85501e;
+    }
+
+    .registrationTimingLabel{
+      display:block;
+      margin-bottom:2px;
+      color:var(--ink);
+      font-weight:700;
+    }
+
+    @media (max-width: 480px){
+      .registrationTiming{
+        grid-template-columns:1fr;
+      }
+    }
+
     .floatingRegister{
       position: fixed;
       left: 50%;
@@ -1322,9 +1362,16 @@
       <div class="wrap panel reveal">
         <div class="kicker"><span class="bar"></span> Register</div>
         <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Fall Registration</h2>
-        <p style="margin:0 0 14px; color: var(--muted); line-height:1.6;">
-          Registration details will be posted here when signups open. Reach out anytime with ride, cost, or timing questions.
-        </p>
+        <div class="registrationTiming" aria-label="Registration deadline and late fee">
+          <div class="registrationTimingItem deadline">
+            <span class="registrationTimingLabel">Registration deadline</span>
+            October 11
+          </div>
+          <div class="registrationTimingItem lateFee">
+            <span class="registrationTimingLabel">Late fee</span>
+            $10 beginning October 12
+          </div>
+        </div>
 
         <div class="ctaRow" style="margin: 0;">
           <a class="btn btnPrimary" href="/register">Register here</a>

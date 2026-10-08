@@ -86,17 +86,45 @@
       font-weight:400;
     }
 
-    .lateFee{
-      width:fit-content;
-      max-width:100%;
-      margin:10px 0 0;
-      padding:7px 10px;
-      border-left:3px solid #d97706;
-      background:rgba(245,158,11,.10);
-      color:rgba(92,45,11,.82);
-      font-size:13px;
-      font-weight:400;
+    .registrationTiming{
+      max-width:720px;
+      margin:12px 0 0;
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0, 1fr));
+      gap:8px;
+      font-size:14px;
       line-height:1.4;
+    }
+
+    .registrationTimingItem{
+      padding:9px 11px;
+      border-left:3px solid;
+      border-radius:0 6px 6px 0;
+    }
+
+    .registrationTimingItem.deadline{
+      border-color:#4589ff;
+      background:rgba(69,137,255,.12);
+      color:#294c71;
+    }
+
+    .registrationTimingItem.lateFee{
+      border-color:#d97706;
+      background:rgba(245,158,11,.12);
+      color:#85501e;
+    }
+
+    .registrationTimingLabel{
+      display:block;
+      margin-bottom:2px;
+      color:var(--ink);
+      font-weight:700;
+    }
+
+    @media (max-width: 480px){
+      .registrationTiming{
+        grid-template-columns:1fr;
+      }
     }
 
     .panel{
@@ -437,7 +465,16 @@
           <span class="discount">First-time student attendees get 50% off</span>
         </dd>
       </dl>
-      <p class="lateFee">$10 late fee for registrations after October 9</p>
+      <div class="registrationTiming" aria-label="Registration deadline and late fee">
+        <div class="registrationTimingItem deadline">
+          <span class="registrationTimingLabel">Registration deadline</span>
+          October 11
+        </div>
+        <div class="registrationTimingItem lateFee">
+          <span class="registrationTimingLabel">Late fee</span>
+          $10 beginning October 12
+        </div>
+      </div>
     </header>
 
     <section class="panel">
@@ -601,7 +638,7 @@
 
               <label class="stateOption">
                 <input type="radio" name="payment_option" value="pay_full" {% if registration and registration.payment_option == 'pay_full' %}checked{% endif %} required>
-                <span>I’ll pay the full registration amount now.</span>
+                <span>I’ll pay for my registration now.</span>
               </label>
             </div>
 
