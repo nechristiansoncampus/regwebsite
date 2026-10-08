@@ -18,6 +18,19 @@ def paypal_base_url():
     return PAYPAL_API_BASE.get(paypal_env, PAYPAL_API_BASE['sandbox'])
 
 
+def paypal_post(path, **kwargs):
+    try:
+        response = requests.post(
+            f'{paypal_base_url()}{path}',
+            timeout=15,
+            **kwargs,
+        )
+        response.raise_for_status()
+    except requests.RequestException as error:
+        raise PayPalError(str(error)) from error
+    return response.json()
+
+
 def get_paypal_access_token():
     client_id = os.environ.get('PAYPAL_CLIENT_ID')
     client_secret = os.environ.get('PAYPAL_CLIENT_SECRET')
@@ -25,69 +38,49 @@ def get_paypal_access_token():
     if not client_id or not client_secret:
         raise PayPalError('PayPal credentials are not configured.')
 
-    try:
-        response = requests.post(
-            f'{paypal_base_url()}/v1/oauth2/token',
-            auth=(client_id, client_secret),
-            data={'grant_type': 'client_credentials'},
-            timeout=15,
-        )
-        response.raise_for_status()
-    except requests.RequestException as error:
-        raise PayPalError(str(error)) from error
-
-    return response.json()['access_token']
+    response = paypal_post(
+        '/v1/oauth2/token',
+        auth=(client_id, client_secret),
+        data={'grant_type': 'client_credentials'},
+    )
+    return response['access_token']
 
 
 def create_order(amount, registration_id):
     access_token = get_paypal_access_token()
-    try:
-        response = requests.post(
-            f'{paypal_base_url()}/v2/checkout/orders',
-            headers={
-                'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json',
-            },
-            json={
-                'intent': 'CAPTURE',
-                'payment_source': {
-                    'paypal': {
-                        'experience_context': {
-                            'shipping_preference': 'NO_SHIPPING',
-                        },
+    return paypal_post(
+        '/v2/checkout/orders',
+        headers={
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json',
+        },
+        json={
+            'intent': 'CAPTURE',
+            'payment_source': {
+                'paypal': {
+                    'experience_context': {
+                        'shipping_preference': 'NO_SHIPPING',
                     },
                 },
-                'purchase_units': [{
-                    'description': 'Retreat registration',
-                    'custom_id': registration_id,
-                    'amount': {
-                        'currency_code': 'USD',
-                        'value': amount,
-                    },
-                }],
             },
-            timeout=15,
-        )
-        response.raise_for_status()
-    except requests.RequestException as error:
-        raise PayPalError(str(error)) from error
-
-    return response.json()
+            'purchase_units': [{
+                'description': 'Retreat registration',
+                'custom_id': registration_id,
+                'amount': {
+                    'currency_code': 'USD',
+                    'value': amount,
+                },
+            }],
+        },
+    )
 
 
 def capture_order(order_id):
     access_token = get_paypal_access_token()
-    try:
-        response = requests.post(
-            f'{paypal_base_url()}/v2/checkout/orders/{order_id}/capture',
-            headers={
-                'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json',
-            },
-            timeout=15,
-        )
-        response.raise_for_status()
-    except requests.RequestException as error:
-        raise PayPalError(str(error)) from error
-
-    return response.json()
+    return paypal_post(
+        f'/v2/checkout/orders/{order_id}/capture',
+        headers={
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json',
+        },
+    )
