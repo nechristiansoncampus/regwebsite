@@ -228,8 +228,9 @@ class RouteTests(unittest.TestCase):
     def test_registration_page_shows_deadline_and_late_fee_date(self):
         html = self.client.get('/register').get_data(as_text=True)
 
-        self.assertIn('Registration deadline: October 11', html)
-        self.assertIn('$10 late fee beginning October 12', html)
+        self.assertIn('Deadline: October 11', html)
+        self.assertIn('$10 late fee begins October 12', html)
+        self.assertIn('I’ll pay for my registration now.', html)
 
     def test_contact_fields_expose_accessible_validation_contract(self):
         html = self.client.get('/register').get_data(as_text=True)
@@ -252,8 +253,8 @@ class RouteTests(unittest.TestCase):
         self.assertIn('What to Expect', html)
         self.assertIn('What People Are Saying About Retreat', html)
         self.assertIn('class="btn btnPrimary" href="/register"', html)
-        self.assertIn('Registration deadline: October 11', html)
-        self.assertIn('A $10 late fee applies beginning October 12.', html)
+        self.assertIn('<b>Deadline</b> October 11', html)
+        self.assertIn('<b>Late fee</b> $10 beginning October 12', html)
         self.assertIn('src="/static/img/fall_retreat_promo.mp4"', html)
         self.assertIn('data-src="/static/img/describe-retreat.mp4"', html)
         self.assertIn('preload="none"', html)

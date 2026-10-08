@@ -928,6 +928,28 @@
       white-space: nowrap;
     }
 
+    .registrationTiming{
+      margin:14px 0 18px;
+      padding:10px 0;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 22px;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.4;
+    }
+
+    .registrationTiming span{
+      white-space:nowrap;
+    }
+
+    .registrationTiming b{
+      color:var(--ink);
+      font-weight:700;
+    }
+
     .floatingRegister{
       position: fixed;
       left: 50%;
@@ -1322,9 +1344,10 @@
       <div class="wrap panel reveal">
         <div class="kicker"><span class="bar"></span> Register</div>
         <h2 style="margin:0 0 8px; font-size: 24px; letter-spacing:-.01em;">Fall Registration</h2>
-        <p style="margin:0 0 14px; color: var(--muted); line-height:1.6;">
-          Registration deadline: October 11. A $10 late fee applies beginning October 12.
-        </p>
+        <div class="registrationTiming" aria-label="Registration deadline and late fee">
+          <span><b>Deadline</b> October 11</span>
+          <span><b>Late fee</b> $10 beginning October 12</span>
+        </div>
 
         <div class="ctaRow" style="margin: 0;">
           <a class="btn btnPrimary" href="/register">Register here</a>
