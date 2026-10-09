@@ -1,7 +1,7 @@
 import os
 import unittest
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 import home
 import registration
@@ -37,6 +37,23 @@ class RouteTests(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(RuntimeError, 'FLASK_SECRET_KEY must be set'):
                 home.required_setting('FLASK_SECRET_KEY')
+
+    @patch.object(home.os.path, 'exists', return_value=True)
+    @patch(
+        'builtins.open',
+        new_callable=mock_open,
+        read_data="\n# comment\nINVALID\nTEST_SETTING = 'from-file'\n",
+    )
+    def test_local_env_loader_ignores_non_settings_and_loads_values(
+        self, open_file, path_exists
+    ):
+        with patch.dict(os.environ, {}, clear=True):
+            home.load_local_env()
+
+            self.assertEqual(os.environ['TEST_SETTING'], 'from-file')
+
+        path_exists.assert_called_once()
+        open_file.assert_called_once_with(os.path.join(home.app.root_path, '.env'))
 
     def test_home_page_defaults_to_fall_retreat(self):
         home_page = self.client.get('/').get_data(as_text=True)
@@ -360,4 +377,3 @@ class RouteTests(unittest.TestCase):
     def test_checkout_requires_registration_session(self):
         response = self.client.get('/checkout')
         self.assertIn(b'Please register before checking out.', response.data)
-
