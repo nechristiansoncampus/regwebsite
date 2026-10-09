@@ -1,0 +1,13 @@
+[run]
+branch = True
+source =
+    email_service
+    google_sheets
+    home
+    paypal_service
+    registration
+
+[report]
+fail_under = 85.0
+precision = 1
+show_missing = True
