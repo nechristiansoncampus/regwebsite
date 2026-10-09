@@ -919,7 +919,21 @@ class PayPalTests(unittest.TestCase):
         logged_payload = logger.call_args.args[1]
         self.assertIn('INSTRUMENT_DECLINED', logged_payload)
         self.assertIn('ORDER-1', logged_payload)
+        self.assertIn('Jamie Student', logged_payload)
+        self.assertNotIn('student@example.com', logged_payload)
         self.assertNotIn('4111111111111111', logged_payload)
+
+    @patch.object(home.app.logger, 'info')
+    def test_paypal_log_normalizes_registrant_name(self, logger):
+        with home.app.test_request_context('/'):
+            home.paypal_log(
+                'order_created',
+                registration_data(first_name=' Jamie\n', last_name=' Student '),
+                order_id='ORDER-1',
+            )
+
+        logged_payload = logger.call_args.args[1]
+        self.assertIn('"registrant": "Jamie Student"', logged_payload)
 
     def test_paypal_client_event_rejects_unknown_events(self):
         self.set_registration_session()

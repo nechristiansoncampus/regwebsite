@@ -116,8 +116,15 @@ def confirmation_kind(registration):
     return 'no_payment'
 
 
-def paypal_log(event, **details):
+def paypal_log(event, registration=None, **details):
     payload = {'event': event}
+    if registration:
+        full_name = ' '.join(filter(None, (
+            registration.get('first_name', '').strip(),
+            registration.get('last_name', '').strip(),
+        )))
+        if full_name:
+            payload['registrant'] = ' '.join(full_name.split())[:120]
     payload.update({key: value for key, value in details.items() if value not in (None, '')})
     app.logger.info('paypal_event %s', json.dumps(payload, sort_keys=True))
 
@@ -233,17 +240,23 @@ def create_paypal_order():
     try:
         order = create_order(amount, session.get('registration_token'))
     except PayPalError as error:
-        paypal_log('order_create_failed', **error.diagnostics)
+        paypal_log('order_create_failed', registration, **error.diagnostics)
         return jsonify({'error': str(error)}), 500
 
     session['paypal_order_id'] = order.get('id')
-    paypal_log('order_created', order_id=order.get('id'), status=order.get('status'))
+    paypal_log(
+        'order_created',
+        registration,
+        order_id=order.get('id'),
+        status=order.get('status'),
+    )
     return jsonify(order)
 
 
 @app.route('/api/paypal/client-events', methods=['post'])
 def paypal_client_event():
-    if not session.get('registration'):
+    registration = session.get('registration')
+    if not registration:
         return ('', 204)
 
     payload = request.get_json(silent=True) or {}
@@ -259,7 +272,7 @@ def paypal_client_event():
         value = payload.get(key)
         if isinstance(value, str):
             details[key] = ' '.join(value.split())[:500]
-    paypal_log(f'client_{event}', **details)
+    paypal_log(f'client_{event}', registration, **details)
     return ('', 204)
 
 @app.route("/api/paypal/orders/<order_id>/capture", methods=['post'])
@@ -280,7 +293,12 @@ def capture_paypal_order(order_id):
     try:
         capture = capture_order(order_id)
     except PayPalError as error:
-        paypal_log('capture_failed', order_id=order_id, **error.diagnostics)
+        paypal_log(
+            'capture_failed',
+            registration,
+            order_id=order_id,
+            **error.diagnostics,
+        )
         return jsonify({'error': str(error)}), 500
 
     capture_details = (
@@ -291,6 +309,7 @@ def capture_paypal_order(order_id):
     if capture_details.get('status') != 'COMPLETED':
         paypal_log(
             'capture_not_completed',
+            registration,
             order_id=order_id,
             status=capture_details.get('status'),
             status_reason=capture_details.get('status_details', {}).get('reason'),
@@ -301,6 +320,7 @@ def capture_paypal_order(order_id):
 
     paypal_log(
         'capture_completed',
+        registration,
         order_id=order_id,
         capture_id=capture_details.get('id'),
         processor_response=capture_details.get('processor_response'),
