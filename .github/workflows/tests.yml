@@ -37,16 +37,20 @@ jobs:
         run: python -m unittest discover -s tests -v
 
       - name: Set up Node.js
+        if: github.event_name == 'pull_request'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
 
       - name: Install browser test dependencies
+        if: github.event_name == 'pull_request'
         run: npm ci
 
       - name: Install Chromium
+        if: github.event_name == 'pull_request'
         run: npx playwright install --with-deps chromium
 
       - name: Run browser tests
+        if: github.event_name == 'pull_request'
         run: npm run test:e2e
