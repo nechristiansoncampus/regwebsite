@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+import json
 import os
 import re
 import secrets
@@ -27,6 +28,20 @@ from registration import (
 
 app = Flask(__name__)
 email_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='confirmation-email')
+PAYPAL_CLIENT_EVENTS = frozenset({
+    'button_clicked',
+    'buttons_rendered',
+    'buttons_render_failed',
+    'capture_failed',
+    'capture_pending',
+    'checkout_approved',
+    'checkout_cancelled',
+    'order_create_failed',
+    'order_created',
+    'sdk_error',
+    'sdk_load_failed',
+    'sdk_unavailable',
+})
 
 
 def required_setting(name):
@@ -99,6 +114,12 @@ def confirmation_kind(registration):
     if is_ccsu(registration):
         return 'ccsu'
     return 'no_payment'
+
+
+def paypal_log(event, **details):
+    payload = {'event': event}
+    payload.update({key: value for key, value in details.items() if value not in (None, '')})
+    app.logger.info('paypal_event %s', json.dumps(payload, sort_keys=True))
 
 
 @app.route("/", methods=['post', 'get'])
@@ -212,10 +233,34 @@ def create_paypal_order():
     try:
         order = create_order(amount, session.get('registration_token'))
     except PayPalError as error:
+        paypal_log('order_create_failed', **error.diagnostics)
         return jsonify({'error': str(error)}), 500
 
     session['paypal_order_id'] = order.get('id')
+    paypal_log('order_created', order_id=order.get('id'), status=order.get('status'))
     return jsonify(order)
+
+
+@app.route('/api/paypal/client-events', methods=['post'])
+def paypal_client_event():
+    if not session.get('registration'):
+        return ('', 204)
+
+    payload = request.get_json(silent=True) or {}
+    event = payload.get('event', '')
+    if event not in PAYPAL_CLIENT_EVENTS:
+        return jsonify({'error': 'Unsupported PayPal event.'}), 400
+
+    details = {}
+    order_id = payload.get('order_id', '')
+    if order_id and order_id == session.get('paypal_order_id'):
+        details['order_id'] = order_id
+    for key in ('error_name', 'message'):
+        value = payload.get(key)
+        if isinstance(value, str):
+            details[key] = ' '.join(value.split())[:500]
+    paypal_log(f'client_{event}', **details)
+    return ('', 204)
 
 @app.route("/api/paypal/orders/<order_id>/capture", methods=['post'])
 def capture_paypal_order(order_id):
@@ -235,6 +280,7 @@ def capture_paypal_order(order_id):
     try:
         capture = capture_order(order_id)
     except PayPalError as error:
+        paypal_log('capture_failed', order_id=order_id, **error.diagnostics)
         return jsonify({'error': str(error)}), 500
 
     capture_details = (
@@ -243,7 +289,22 @@ def capture_paypal_order(order_id):
         .get('captures', [{}])[0]
     )
     if capture_details.get('status') != 'COMPLETED':
+        paypal_log(
+            'capture_not_completed',
+            order_id=order_id,
+            status=capture_details.get('status'),
+            status_reason=capture_details.get('status_details', {}).get('reason'),
+            processor_response=capture_details.get('processor_response'),
+            debug_id=capture.get('debug_id'),
+        )
         return jsonify(capture)
+
+    paypal_log(
+        'capture_completed',
+        order_id=order_id,
+        capture_id=capture_details.get('id'),
+        processor_response=capture_details.get('processor_response'),
+    )
 
     registration.update({
         'payment_status': 'Paid',

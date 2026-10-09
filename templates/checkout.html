@@ -230,6 +230,21 @@
         const processingDetail = document.getElementById('processing-detail');
         let isFinalizing = false;
 
+        function reportPayPalEvent(event, error, orderId) {
+          const payload = { event };
+          if (orderId) payload.order_id = orderId;
+          if (error) {
+            payload.error_name = error.name || '';
+            payload.message = error.message || String(error);
+          }
+          fetch('/api/paypal/client-events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+          }).catch(() => {});
+        }
+
         function showMessage(text, type) {
           messageText.textContent = text;
           message.className = `message ${type || ''}${text ? '' : ' isEmpty'}`;
@@ -251,6 +266,7 @@
 
         function renderPayPalButtons() {
           if (!window.paypal || !window.paypal.Buttons) {
+            reportPayPalEvent('sdk_unavailable');
             showMessage('PayPal checkout could not load. Refresh the page or check the PayPal client ID.', 'error');
             return;
           }
@@ -262,6 +278,9 @@
               shape: 'rect',
               label: 'paypal'
             },
+            onClick() {
+              reportPayPalEvent('button_clicked');
+            },
             async createOrder() {
               const response = await fetch('/api/paypal/orders', {
                 method: 'POST',
@@ -269,12 +288,16 @@
               });
               const order = await response.json();
               if (!response.ok) {
-                throw new Error(order.error || 'Unable to create PayPal order.');
+                const error = new Error(order.error || 'Unable to create PayPal order.');
+                reportPayPalEvent('order_create_failed', error);
+                throw error;
               }
+              reportPayPalEvent('order_created', null, order.id);
               return order.id;
             },
             async onApprove(data) {
               if (isFinalizing) return;
+              reportPayPalEvent('checkout_approved', null, data.orderID);
               showProcessing(
                 'Finalizing your registration',
                 'Your payment was submitted. Please keep this page open.'
@@ -297,7 +320,9 @@
                   'Payment is still processing',
                   'Please do not submit another payment. Contact us if this page does not update.'
                 );
+                reportPayPalEvent('capture_pending', null, data.orderID);
               } catch (error) {
+                reportPayPalEvent('capture_failed', error, data.orderID);
                 const reason = error.message || 'We could not finish your registration.';
                 showProcessing(
                   'We could not confirm your registration',
@@ -307,15 +332,21 @@
                 return;
               }
             },
-            onCancel() {
+            onCancel(data) {
+              reportPayPalEvent('checkout_cancelled', null, data && data.orderID);
               showMessage('Checkout cancelled. No payment was taken.');
             },
             onError(error) {
+              reportPayPalEvent('sdk_error', error);
               showMessage(error.message || 'Something went wrong with PayPal checkout.', 'error');
             }
           }).render('#paypal-button-container')
-            .then(() => showMessage(''))
+            .then(() => {
+              reportPayPalEvent('buttons_rendered');
+              showMessage('');
+            })
             .catch((error) => {
+              reportPayPalEvent('buttons_render_failed', error);
               showMessage(error.message || 'PayPal checkout could not render.', 'error');
             });
         }
@@ -324,6 +355,7 @@
         paypalScript.src = 'https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD&intent=capture';
         paypalScript.onload = renderPayPalButtons;
         paypalScript.onerror = () => {
+          reportPayPalEvent('sdk_load_failed');
           showMessage('PayPal checkout could not load. Check your internet connection and PayPal client ID.', 'error');
         };
         document.head.appendChild(paypalScript);

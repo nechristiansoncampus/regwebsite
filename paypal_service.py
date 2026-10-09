@@ -10,12 +10,41 @@ PAYPAL_API_BASE = {
 
 
 class PayPalError(RuntimeError):
-    pass
+    def __init__(self, message, diagnostics=None):
+        super().__init__(message)
+        self.diagnostics = diagnostics or {}
 
 
 def paypal_base_url():
     paypal_env = os.environ.get('PAYPAL_ENV', 'sandbox').lower()
     return PAYPAL_API_BASE.get(paypal_env, PAYPAL_API_BASE['sandbox'])
+
+
+def paypal_diagnostics(response):
+    if response is None:
+        return {}
+
+    try:
+        payload = response.json()
+    except (TypeError, ValueError):
+        payload = {}
+
+    diagnostics = {
+        'http_status': getattr(response, 'status_code', None),
+        'name': payload.get('name'),
+        'message': payload.get('message'),
+        'debug_id': payload.get('debug_id'),
+    }
+    details = []
+    for detail in payload.get('details', [])[:5]:
+        details.append({
+            key: detail.get(key)
+            for key in ('issue', 'description', 'field', 'location')
+            if detail.get(key)
+        })
+    if details:
+        diagnostics['details'] = details
+    return {key: value for key, value in diagnostics.items() if value is not None}
 
 
 def paypal_post(path, **kwargs):
@@ -27,7 +56,9 @@ def paypal_post(path, **kwargs):
         )
         response.raise_for_status()
     except requests.RequestException as error:
-        raise PayPalError(str(error)) from error
+        diagnostics = paypal_diagnostics(getattr(error, 'response', None))
+        message = diagnostics.get('message') or str(error)
+        raise PayPalError(message, diagnostics) from error
     return response.json()
 
 
