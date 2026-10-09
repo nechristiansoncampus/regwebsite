@@ -126,7 +126,7 @@ def paypal_log(event, registration=None, **details):
         if full_name:
             payload['registrant'] = ' '.join(full_name.split())[:120]
     payload.update({key: value for key, value in details.items() if value not in (None, '')})
-    app.logger.info('paypal_event %s', json.dumps(payload, sort_keys=True))
+    app.logger.warning('paypal_event %s', json.dumps(payload, sort_keys=True))
 
 
 @app.route("/", methods=['post', 'get'])
@@ -260,6 +260,8 @@ def paypal_client_event():
         return ('', 204)
 
     payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'PayPal event must be a JSON object.'}), 400
     event = payload.get('event', '')
     if event not in PAYPAL_CLIENT_EVENTS:
         return jsonify({'error': 'Unsupported PayPal event.'}), 400

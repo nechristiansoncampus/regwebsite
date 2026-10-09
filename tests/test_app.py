@@ -903,7 +903,7 @@ class PayPalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Payment is not required', response.get_json()['error'])
 
-    @patch.object(home.app.logger, 'info')
+    @patch.object(home.app.logger, 'warning')
     def test_paypal_client_event_logs_only_allowlisted_fields(self, logger):
         self.set_registration_session(paypal_order_id='ORDER-1')
 
@@ -923,7 +923,7 @@ class PayPalTests(unittest.TestCase):
         self.assertNotIn('student@example.com', logged_payload)
         self.assertNotIn('4111111111111111', logged_payload)
 
-    @patch.object(home.app.logger, 'info')
+    @patch.object(home.app.logger, 'warning')
     def test_paypal_log_normalizes_registrant_name(self, logger):
         with home.app.test_request_context('/'):
             home.paypal_log(
@@ -941,6 +941,13 @@ class PayPalTests(unittest.TestCase):
         response = self.client.post('/api/paypal/client-events', json={
             'event': 'arbitrary_event',
         })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_paypal_client_event_rejects_non_object_json(self):
+        self.set_registration_session()
+
+        response = self.client.post('/api/paypal/client-events', json=['sdk_error'])
 
         self.assertEqual(response.status_code, 400)
 
@@ -1088,6 +1095,14 @@ class PayPalServiceTests(unittest.TestCase):
             raised.exception.diagnostics['details'][0]['issue'],
             'INSTRUMENT_DECLINED',
         )
+
+    def test_paypal_diagnostics_tolerates_non_object_json(self):
+        response = Mock(status_code=500)
+        response.json.return_value = ['unexpected payload']
+
+        diagnostics = paypal_service.paypal_diagnostics(response)
+
+        self.assertEqual(diagnostics, {'http_status': 500})
 
     @patch.object(paypal_service, 'get_paypal_access_token', return_value='access-token')
     @patch.object(paypal_service.requests, 'post')

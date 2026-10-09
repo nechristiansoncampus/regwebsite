@@ -28,6 +28,8 @@ def paypal_diagnostics(response):
         payload = response.json()
     except (TypeError, ValueError):
         payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
 
     diagnostics = {
         'http_status': getattr(response, 'status_code', None),
@@ -36,7 +38,12 @@ def paypal_diagnostics(response):
         'debug_id': payload.get('debug_id'),
     }
     details = []
-    for detail in payload.get('details', [])[:5]:
+    raw_details = payload.get('details', [])
+    if not isinstance(raw_details, list):
+        raw_details = []
+    for detail in raw_details[:5]:
+        if not isinstance(detail, dict):
+            continue
         details.append({
             key: detail.get(key)
             for key in ('issue', 'description', 'field', 'location')
