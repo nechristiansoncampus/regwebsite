@@ -3,3 +3,10 @@ venv-regwebsite
 regwebsite.code-workspace
 credentials
 .env
+.coverage
+htmlcov/
+__pycache__/
+*.py[cod]
+node_modules
+playwright-report
+test-results
