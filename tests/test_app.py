@@ -903,6 +903,54 @@ class PayPalTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Payment is not required', response.get_json()['error'])
 
+    @patch.object(home.app.logger, 'warning')
+    def test_paypal_client_event_logs_only_allowlisted_fields(self, logger):
+        self.set_registration_session(paypal_order_id='ORDER-1')
+
+        response = self.client.post('/api/paypal/client-events', json={
+            'event': 'sdk_error',
+            'error_name': 'INSTRUMENT_DECLINED',
+            'message': 'Payment method declined',
+            'order_id': 'ORDER-1',
+            'card_number': '4111111111111111',
+        })
+
+        self.assertEqual(response.status_code, 204)
+        logged_payload = logger.call_args.args[1]
+        self.assertIn('INSTRUMENT_DECLINED', logged_payload)
+        self.assertIn('ORDER-1', logged_payload)
+        self.assertIn('Jamie Student', logged_payload)
+        self.assertNotIn('student@example.com', logged_payload)
+        self.assertNotIn('4111111111111111', logged_payload)
+
+    @patch.object(home.app.logger, 'warning')
+    def test_paypal_log_normalizes_registrant_name(self, logger):
+        with home.app.test_request_context('/'):
+            home.paypal_log(
+                'order_created',
+                registration_data(first_name=' Jamie\n', last_name=' Student '),
+                order_id='ORDER-1',
+            )
+
+        logged_payload = logger.call_args.args[1]
+        self.assertIn('"registrant": "Jamie Student"', logged_payload)
+
+    def test_paypal_client_event_rejects_unknown_events(self):
+        self.set_registration_session()
+
+        response = self.client.post('/api/paypal/client-events', json={
+            'event': 'arbitrary_event',
+        })
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_paypal_client_event_rejects_non_object_json(self):
+        self.set_registration_session()
+
+        response = self.client.post('/api/paypal/client-events', json=['sdk_error'])
+
+        self.assertEqual(response.status_code, 400)
+
     @patch.dict(os.environ, {'RETREAT_REGISTRATION_AMOUNT': '125.00'}, clear=False)
     @patch.object(home, 'create_order')
     def test_create_order_uses_registration_amount(self, create_order):
@@ -1020,6 +1068,42 @@ class PayPalTests(unittest.TestCase):
 
 
 class PayPalServiceTests(unittest.TestCase):
+    @patch.object(paypal_service.requests, 'post')
+    def test_paypal_error_retains_safe_api_diagnostics(self, requests_post):
+        response = Mock(status_code=422)
+        response.json.return_value = {
+            'name': 'UNPROCESSABLE_ENTITY',
+            'message': 'The requested action could not be performed.',
+            'debug_id': 'debug-123',
+            'details': [{
+                'issue': 'INSTRUMENT_DECLINED',
+                'description': 'The instrument presented was declined.',
+                'field': '/payment_source/card',
+            }],
+        }
+        requests_post.return_value = response
+        response.raise_for_status.side_effect = paypal_service.requests.HTTPError(
+            response=response,
+        )
+
+        with self.assertRaises(paypal_service.PayPalError) as raised:
+            paypal_service.paypal_post('/v2/checkout/orders')
+
+        self.assertEqual(raised.exception.diagnostics['http_status'], 422)
+        self.assertEqual(raised.exception.diagnostics['debug_id'], 'debug-123')
+        self.assertEqual(
+            raised.exception.diagnostics['details'][0]['issue'],
+            'INSTRUMENT_DECLINED',
+        )
+
+    def test_paypal_diagnostics_tolerates_non_object_json(self):
+        response = Mock(status_code=500)
+        response.json.return_value = ['unexpected payload']
+
+        diagnostics = paypal_service.paypal_diagnostics(response)
+
+        self.assertEqual(diagnostics, {'http_status': 500})
+
     @patch.object(paypal_service, 'get_paypal_access_token', return_value='access-token')
     @patch.object(paypal_service.requests, 'post')
     def test_create_order_builds_paypal_payload(self, requests_post, get_access_token):

@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import jsonify, redirect, render_template, request, session, url_for
 
+import json
 import os
 import re
 import secrets
@@ -27,6 +28,20 @@ from registration import (
 
 app = Flask(__name__)
 email_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='confirmation-email')
+PAYPAL_CLIENT_EVENTS = frozenset({
+    'button_clicked',
+    'buttons_rendered',
+    'buttons_render_failed',
+    'capture_failed',
+    'capture_pending',
+    'checkout_approved',
+    'checkout_cancelled',
+    'order_create_failed',
+    'order_created',
+    'sdk_error',
+    'sdk_load_failed',
+    'sdk_unavailable',
+})
 
 
 def required_setting(name):
@@ -75,6 +90,45 @@ def registration_config():
     }
 
 
+def render_registration_form(registration=None, error=None):
+    return render_template(
+        'register.html',
+        error=error,
+        registration=registration,
+    )
+
+
+def render_checkout(registration):
+    return render_template(
+        'checkout.html',
+        registration=registration,
+        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
+        amount=registration.get('amount_due') or registration_amount(registration),
+        late_fee=registration.get('late_fee', ''),
+    )
+
+
+def confirmation_kind(registration):
+    if registration['payment_option'] == 'scholarship':
+        return 'scholarship'
+    if is_ccsu(registration):
+        return 'ccsu'
+    return 'no_payment'
+
+
+def paypal_log(event, registration=None, **details):
+    payload = {'event': event}
+    if registration:
+        full_name = ' '.join(filter(None, (
+            registration.get('first_name', '').strip(),
+            registration.get('last_name', '').strip(),
+        )))
+        if full_name:
+            payload['registrant'] = ' '.join(full_name.split())[:120]
+    payload.update({key: value for key, value in details.items() if value not in (None, '')})
+    app.logger.warning('paypal_event %s', json.dumps(payload, sort_keys=True))
+
+
 @app.route("/", methods=['post', 'get'])
 def home():
     return render_template('fall_retreat.html')
@@ -98,16 +152,14 @@ def register():
         elif app.testing and not form_token:
             registration_token = secrets.token_urlsafe(16)
         else:
-            return render_template(
-                'register.html',
+            return render_registration_form(
                 error='This registration form expired. Please refresh the page and try again.',
                 registration=registration,
             )
 
         validation_error = validate_registration(registration)
         if validation_error:
-            return render_template(
-                'register.html',
+            return render_registration_form(
                 error=validation_error,
                 registration=registration,
             )
@@ -133,19 +185,14 @@ def register():
                 record_registration(registration, registration_token)
             except Exception:
                 app.logger.exception('Unable to save registration to Google Sheets.')
-                return render_template(
-                    'register.html',
+                return render_registration_form(
                     error='We could not save your registration. Please try again.',
                     registration=registration,
                 )
             queue_confirmation_email(
                 registration,
                 registration_token,
-                (
-                    'scholarship'
-                    if registration['payment_option'] == 'scholarship'
-                    else 'ccsu' if is_ccsu(registration) else 'no_payment'
-                ),
+                confirmation_kind(registration),
             )
 
         if no_payment:
@@ -158,13 +205,7 @@ def register():
         if registration['payment_option'] == 'scholarship':
             return render_template('scholarship_confirmation.html', registration=registration)
 
-        return render_template(
-            'checkout.html',
-            registration=registration,
-            paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-            amount=registration['amount_due'],
-            late_fee=registration['late_fee'],
-        )
+        return render_checkout(registration)
 
     session['registration_form_token'] = secrets.token_urlsafe(16)
     return render_template('register.html')
@@ -173,7 +214,7 @@ def register():
 def checkout():
     registration = session.get('registration')
     if not registration:
-        return render_template('register.html', error='Please register before checking out.')
+        return render_registration_form(error='Please register before checking out.')
 
     if payment_not_required(registration):
         return render_template(
@@ -182,13 +223,7 @@ def checkout():
             ccsu_registration=is_ccsu(registration),
         )
 
-    return render_template(
-        'checkout.html',
-        registration=registration,
-        paypal_client_id=os.environ.get('PAYPAL_CLIENT_ID'),
-        amount=registration.get('amount_due') or registration_amount(registration),
-        late_fee=registration.get('late_fee', ''),
-    )
+    return render_checkout(registration)
 
 
 @app.route("/api/paypal/orders", methods=['post'])
@@ -205,10 +240,42 @@ def create_paypal_order():
     try:
         order = create_order(amount, session.get('registration_token'))
     except PayPalError as error:
+        paypal_log('order_create_failed', registration, **error.diagnostics)
         return jsonify({'error': str(error)}), 500
 
     session['paypal_order_id'] = order.get('id')
+    paypal_log(
+        'order_created',
+        registration,
+        order_id=order.get('id'),
+        status=order.get('status'),
+    )
     return jsonify(order)
+
+
+@app.route('/api/paypal/client-events', methods=['post'])
+def paypal_client_event():
+    registration = session.get('registration')
+    if not registration:
+        return ('', 204)
+
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify({'error': 'PayPal event must be a JSON object.'}), 400
+    event = payload.get('event', '')
+    if event not in PAYPAL_CLIENT_EVENTS:
+        return jsonify({'error': 'Unsupported PayPal event.'}), 400
+
+    details = {}
+    order_id = payload.get('order_id', '')
+    if order_id and order_id == session.get('paypal_order_id'):
+        details['order_id'] = order_id
+    for key in ('error_name', 'message'):
+        value = payload.get(key)
+        if isinstance(value, str):
+            details[key] = ' '.join(value.split())[:500]
+    paypal_log(f'client_{event}', registration, **details)
+    return ('', 204)
 
 @app.route("/api/paypal/orders/<order_id>/capture", methods=['post'])
 def capture_paypal_order(order_id):
@@ -228,6 +295,12 @@ def capture_paypal_order(order_id):
     try:
         capture = capture_order(order_id)
     except PayPalError as error:
+        paypal_log(
+            'capture_failed',
+            registration,
+            order_id=order_id,
+            **error.diagnostics,
+        )
         return jsonify({'error': str(error)}), 500
 
     capture_details = (
@@ -236,7 +309,24 @@ def capture_paypal_order(order_id):
         .get('captures', [{}])[0]
     )
     if capture_details.get('status') != 'COMPLETED':
+        paypal_log(
+            'capture_not_completed',
+            registration,
+            order_id=order_id,
+            status=capture_details.get('status'),
+            status_reason=capture_details.get('status_details', {}).get('reason'),
+            processor_response=capture_details.get('processor_response'),
+            debug_id=capture.get('debug_id'),
+        )
         return jsonify(capture)
+
+    paypal_log(
+        'capture_completed',
+        registration,
+        order_id=order_id,
+        capture_id=capture_details.get('id'),
+        processor_response=capture_details.get('processor_response'),
+    )
 
     registration.update({
         'payment_status': 'Paid',

@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 EMAIL_PATTERN = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 FULL_TIMER_STATES = frozenset({'Massachusetts', 'New Hampshire'})
 FULL_TIMER_STATUS_KEYS = frozenset({'ft', 'fulltime', 'fulltimer'})
+DEFAULT_REGISTRATION_AMOUNT = Decimal('125.00')
+DEFAULT_LATE_FEE_AMOUNT = Decimal('10.00')
 
 
 def parse_registration(form):
@@ -77,6 +79,13 @@ def validate_registration(registration):
     return None
 
 
+def configured_amount(name, default):
+    try:
+        return Decimal(os.environ.get(name, str(default))).quantize(Decimal('0.01'))
+    except InvalidOperation:
+        return default
+
+
 def late_fee_amount(now=None):
     cutoff_text = os.environ.get(
         'RETREAT_LATE_FEE_START',
@@ -98,19 +107,11 @@ def late_fee_amount(now=None):
     if current_time < cutoff:
         return Decimal('0.00')
 
-    configured_fee = os.environ.get('RETREAT_LATE_FEE_AMOUNT', '10.00')
-    try:
-        return Decimal(configured_fee).quantize(Decimal('0.01'))
-    except InvalidOperation:
-        return Decimal('10.00')
+    return configured_amount('RETREAT_LATE_FEE_AMOUNT', DEFAULT_LATE_FEE_AMOUNT)
 
 
 def base_registration_amount():
-    configured_amount = os.environ.get('RETREAT_REGISTRATION_AMOUNT', '125.00')
-    try:
-        return Decimal(configured_amount).quantize(Decimal('0.01'))
-    except InvalidOperation:
-        return Decimal('125.00')
+    return configured_amount('RETREAT_REGISTRATION_AMOUNT', DEFAULT_REGISTRATION_AMOUNT)
 
 
 def registration_amount_display():
