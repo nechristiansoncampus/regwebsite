@@ -517,10 +517,10 @@ class CheckInTests(unittest.TestCase):
         home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
         self.client = home.app.test_client()
         self.worksheet = MagicMock()
-        spreadsheet = Mock()
-        spreadsheet.worksheet_by_title.return_value = self.worksheet
+        self.spreadsheet = Mock()
+        self.spreadsheet.worksheet_by_title.return_value = self.worksheet
         sheets_client = Mock()
-        sheets_client.open.return_value = spreadsheet
+        sheets_client.open.return_value = self.spreadsheet
         self.authorize_patcher = patch.object(
             home.pygsheets,
             'authorize',
@@ -551,6 +551,7 @@ class CheckInTests(unittest.TestCase):
         self.assertIn(b'Jamie Student', response.data)
         self.assertIn(b'Cabin 4', response.data)
         self.assertIn(b'Group B', response.data)
+        self.spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
         self.worksheet.update_value.assert_called_once_with('D1', True)
 
     def test_unpaid_attendee_is_not_checked_in(self):

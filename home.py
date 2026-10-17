@@ -453,7 +453,7 @@ def info():
     gc = pygsheets.authorize(service_account_env_var='service_credentials')
     # add regwebsite@reg-website-341515.iam.gserviceaccount.com as editor to sheet
     sh = gc.open('2026 Fall Retreat - Registration (Responses)')
-    wks = sh.worksheet_by_title('Responses')
+    wks = sh.worksheet_by_title('Registrations')
 
     if request.method == 'POST':
         i = 0
