@@ -71,6 +71,70 @@ body {
     gap: 8px;
 }
 
+.phone-input-wrap {
+    position: relative;
+}
+
+.field-validation {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 10px);
+    left: 18px;
+    display: flex;
+    width: min(330px, calc(100% - 18px));
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(180, 83, 9, .28);
+    border-radius: 10px;
+    background: #fffaf3;
+    color: #4b2b17;
+    box-shadow: 0 14px 32px rgba(92, 45, 11, .18);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.field-validation[hidden] {
+    display: none;
+}
+
+.field-validation::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: 22px;
+    width: 13px;
+    height: 13px;
+    border-top: 1px solid rgba(180, 83, 9, .28);
+    border-left: 1px solid rgba(180, 83, 9, .28);
+    background: #fffaf3;
+    transform: rotate(45deg);
+}
+
+.field-validation-icon {
+    display: grid;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 6px;
+    background: #b45309;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.field-validation-message {
+    padding-top: 1px;
+}
+
+.check-in-surface .form-control.is-invalid {
+    border-color: rgba(180, 83, 9, .58);
+    background-image: none;
+    box-shadow: 0 0 0 3px rgba(180, 83, 9, .14);
+}
+
 .check-in-surface .form-label {
     display: flex;
     justify-content: space-between;

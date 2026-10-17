@@ -33,14 +33,20 @@
             </div>
           {% endif %}
           <div class="check-in-form-area">
-            <form class="check-in-form" action="/info" method="post">
+            <form class="check-in-form" action="/info" method="post" novalidate>
               <div class="check-in-field">
                 <label for="name" class="form-label">Name <span>Optional</span></label>
                 <input type="text" class="form-control" name="name" id="name">
               </div>
               <div class="check-in-field">
                 <label for="phone" class="form-label">Phone number</label>
-                <input type="tel" class="form-control" name="phone" id="phone" inputmode="numeric" pattern="[0-9]{10}" title="Enter exactly 10 digits without spaces, dashes, or parentheses." placeholder="2025550144" required>
+                <div class="phone-input-wrap">
+                  <input type="tel" class="form-control" name="phone" id="phone" inputmode="numeric" pattern="[0-9]{10}" placeholder="2025550144" aria-describedby="phoneFormat phoneError" required>
+                  <div class="field-validation" id="phoneError" role="alert" hidden>
+                    <span class="field-validation-icon" aria-hidden="true">!</span>
+                    <span class="field-validation-message"></span>
+                  </div>
+                </div>
                 <div id="phoneFormat" class="form-text">numbers only, no dashes or parentheses</div>
               </div>
               <div class="check-in-actions">
@@ -51,13 +57,37 @@
         </div>
       </div>
       <script>
-        function updateRequirements(element) {
-          if (element.value == "yes") {
-            document.getElementById('shoe-size').required = true;
-          } else {
-            document.getElementById('shoe-size').required = false;
-          }
+        const checkInForm = document.querySelector('.check-in-form');
+        const phoneInput = document.getElementById('phone');
+        const phoneError = document.getElementById('phoneError');
+        const phoneErrorMessage = phoneError.querySelector('.field-validation-message');
+
+        function hidePhoneError() {
+          phoneError.hidden = true;
+          phoneInput.classList.remove('is-invalid');
+          phoneInput.removeAttribute('aria-invalid');
         }
+
+        function showPhoneError() {
+          phoneErrorMessage.textContent = phoneInput.value
+            ? 'Enter exactly 10 digits without spaces, dashes, or parentheses.'
+            : 'Enter the phone number used for your registration.';
+          phoneError.hidden = false;
+          phoneInput.classList.add('is-invalid');
+          phoneInput.setAttribute('aria-invalid', 'true');
+        }
+
+        phoneInput.addEventListener('input', hidePhoneError);
+        phoneInput.addEventListener('blur', () => {
+          if (phoneInput.value && !phoneInput.validity.valid) showPhoneError();
+        });
+        checkInForm.addEventListener('submit', (event) => {
+          if (!phoneInput.validity.valid) {
+            event.preventDefault();
+            showPhoneError();
+            phoneInput.focus();
+          }
+        });
       </script>
     </div>
   </body>

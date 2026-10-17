@@ -543,8 +543,11 @@ class CheckInTests(unittest.TestCase):
         phone_input = html.split('<input type="tel"', 1)[1].split('>', 1)[0]
         self.assertIn('inputmode="numeric"', phone_input)
         self.assertIn('pattern="[0-9]{10}"', phone_input)
+        self.assertIn('aria-describedby="phoneFormat phoneError"', phone_input)
         self.assertIn('required', phone_input)
-        self.assertIn('<form class="check-in-form" action="/info" method="post">', html)
+        self.assertIn('<form class="check-in-form" action="/info" method="post" novalidate>', html)
+        self.assertIn('class="field-validation"', html)
+        self.assertIn("checkInForm.addEventListener('submit'", html)
 
     @staticmethod
     def check_in_row(payment_status='Paid'):
