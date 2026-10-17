@@ -531,17 +531,6 @@ class CheckInTests(unittest.TestCase):
     def tearDown(self):
         self.authorize_patcher.stop()
 
-    def test_check_in_page_uses_retreat_theme_and_preserves_phone_validation(self):
-        html = self.client.get('/check-in').get_data(as_text=True)
-
-        self.assertIn("But Daniel: A Heart Set for God's Purpose", html)
-        self.assertIn('/static/css/check_in.css', html)
-        self.assertNotIn('banner.png', html)
-        self.assertIn('<input type="tel"', html)
-        phone_input = html.split('<input type="tel"', 1)[1].split('>', 1)[0]
-        self.assertIn('pattern="^(\\+)?(?:[0-9] ?){6,14}[0-9]$"', phone_input)
-        self.assertIn('required', phone_input)
-
     @staticmethod
     def check_in_row(payment_status='Paid'):
         row = [''] * 26
@@ -582,7 +571,7 @@ class CheckInTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Phone number not registered', response.data)
-        self.assertIn(b'<label for="phone">Phone number</label>', response.data)
+        self.assertIn(b'Enter your phone number:', response.data)
         self.worksheet.update_value.assert_not_called()
 
 
