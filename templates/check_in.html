@@ -10,8 +10,10 @@
 </head>
 <body class="checkin-page">
   <main class="checkin-panel">
-    <p class="retreat-name">Fall Retreat 2026</p>
-    <p class="retreat-theme">But Daniel: A Heart Set for God's Purpose</p>
+    <header class="retreat-context">
+      <p class="retreat-name">Fall Retreat 2026</p>
+      <p class="retreat-theme">But Daniel: A Heart Set for God's Purpose</p>
+    </header>
 
     <h1 class="checkin-heading">Check in</h1>
     <p class="checkin-intro">Enter the phone number used for your registration.</p>
@@ -25,15 +27,15 @@
 
     <form class="checkin-form" action="/info" method="post">
       <div class="checkin-field">
-        <label for="name">Enter your name:</label>
+        <label for="name">Name</label>
         <input type="text" class="form-control" name="name" id="name" autocomplete="name">
       </div>
       <div class="checkin-field">
-        <label for="phone">Enter your phone number:</label>
+        <label for="phone">Phone number</label>
         <input type="tel" class="form-control" name="phone" id="phone" pattern="^(\+)?(?:[0-9] ?){6,14}[0-9]$" placeholder="2025550144" required>
-        <div id="phoneFormat" class="checkin-hint">numbers only, no dashes or parentheses</div>
+        <div id="phoneFormat" class="checkin-hint">Numbers only, no dashes or parentheses</div>
       </div>
-      <button type="submit" class="checkin-button">Submit</button>
+      <button type="submit" class="checkin-button">Check in</button>
     </form>
   </main>
 </body>
