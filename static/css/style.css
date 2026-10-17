@@ -75,7 +75,8 @@ body {
 
 .check-in-surface .btn-primary {
     border-color: rgba(180, 83, 9, .38);
-    background: linear-gradient(100deg, rgba(245, 190, 112, .88), rgba(239, 166, 107, .82), rgba(190, 190, 126, .72));
+    background-color: #e9aa68;
+    background-image: linear-gradient(100deg, rgba(245, 190, 112, .88), rgba(239, 166, 107, .82), rgba(190, 190, 126, .72));
     color: rgba(69, 30, 12, .94);
     font-weight: 800;
     box-shadow: 0 12px 26px rgba(146, 64, 14, .18), 0 1px 0 rgba(255, 255, 255, .48) inset;
@@ -84,7 +85,8 @@ body {
 .check-in-surface .btn-primary:hover,
 .check-in-surface .btn-primary:focus {
     border-color: rgba(180, 83, 9, .48);
-    background: linear-gradient(100deg, rgba(244, 179, 87, .94), rgba(232, 144, 84, .88), rgba(174, 181, 109, .78));
+    background-color: #df9556;
+    background-image: linear-gradient(100deg, rgba(244, 179, 87, .94), rgba(232, 144, 84, .88), rgba(174, 181, 109, .78));
     color: rgba(69, 30, 12, .94);
 }
 
@@ -92,11 +94,30 @@ body {
     color: #9a4108;
 }
 
-#banner {
+.retreat-wordmark {
     width: 110%;
-    padding-bottom: 10px;
+    margin: 0 -5% 16px;
+    padding: 2px 8%;
+    color: #16110d;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(24px, 4.4vw, 40px);
+    letter-spacing: 0;
+    line-height: .98;
+}
+
+.retreat-wordmark span {
     display: block;
-    margin: auto;
+    white-space: nowrap;
+}
+
+.retreat-wordmark-strong {
+    font-weight: 900;
+}
+
+.retreat-wordmark-light {
+    margin: .15em 0;
+    font-size: .88em;
+    font-weight: 400;
 }
 
 @media (max-width: 575px) {
@@ -108,6 +129,10 @@ body {
         margin-inline: 12px;
         padding: 18px;
         border-radius: 16px;
+    }
+
+    .retreat-wordmark {
+        font-size: clamp(24px, 8.5vw, 36px);
     }
 }
 

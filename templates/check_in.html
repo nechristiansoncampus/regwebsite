@@ -13,7 +13,11 @@
     <div class="vertical-center"><div class="container-fluid">
       <div class="row justify-content-center align-items-center">
         <div class="col col-sm-6 col-md-6 col-lg-5 col-xl-4 check-in-surface">
-          <img id="banner" src="{{ url_for('static', filename='img/banner.png') }}"/>
+          <div class="retreat-wordmark" role="img" aria-label="But Daniel: A Heart Set for God's Purpose">
+            <span class="retreat-wordmark-strong">But Daniel:</span>
+            <span class="retreat-wordmark-light">A Heart Set for</span>
+            <span class="retreat-wordmark-strong">God's Purpose</span>
+          </div>
           <div class="row"><h1>Welcome!</h1></div>
           {% if error %}
             <div class="alert alert-danger alert-dismissible fade show" role="alert">

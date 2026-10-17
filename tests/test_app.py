@@ -531,6 +531,18 @@ class CheckInTests(unittest.TestCase):
     def tearDown(self):
         self.authorize_patcher.stop()
 
+    def test_check_in_page_uses_text_wordmark_and_preserves_phone_validation(self):
+        html = self.client.get('/check-in').get_data(as_text=True)
+
+        self.assertIn('class="retreat-wordmark"', html)
+        self.assertIn("But Daniel:", html)
+        self.assertIn("A Heart Set for", html)
+        self.assertIn("God's Purpose", html)
+        self.assertNotIn('img/banner.png', html)
+        phone_input = html.split('<input type="tel"', 1)[1].split('>', 1)[0]
+        self.assertIn('pattern="^(\\+)?(?:[0-9] ?){6,14}[0-9]$"', phone_input)
+        self.assertIn('required', phone_input)
+
     @staticmethod
     def check_in_row(payment_status='Paid'):
         row = [''] * 26
