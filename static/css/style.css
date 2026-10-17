@@ -148,7 +148,7 @@ body {
 
 .retreat-eyebrow {
     margin: 0 0 12px;
-    color: rgba(133, 80, 30, .72);
+    color: #77716c;
     font-size: 11px;
     font-weight: 750;
     letter-spacing: 0;
@@ -181,7 +181,7 @@ body {
 .retreat-wordmark-first {
     font-size: 1em;
     font-weight: 800;
-    background: linear-gradient(90deg, #98572c, #8f5148);
+    background: linear-gradient(90deg, #252321, #514d49);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -196,7 +196,7 @@ body {
 
 .retreat-wordmark-third {
     font-size: .837em;
-    background: linear-gradient(90deg, #52735a, #8b663d);
+    background: linear-gradient(90deg, #45413e, #716b66);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
