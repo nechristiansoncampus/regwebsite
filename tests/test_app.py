@@ -541,7 +541,8 @@ class CheckInTests(unittest.TestCase):
         self.assertIn("God's Purpose", html)
         self.assertNotIn('img/banner.png', html)
         phone_input = html.split('<input type="tel"', 1)[1].split('>', 1)[0]
-        self.assertIn('pattern="^(\\+)?(?:[0-9] ?){6,14}[0-9]$"', phone_input)
+        self.assertIn('inputmode="numeric"', phone_input)
+        self.assertIn('pattern="[0-9]{10}"', phone_input)
         self.assertIn('required', phone_input)
         self.assertIn('<form class="check-in-form" action="/info" method="post">', html)
 
@@ -610,6 +611,17 @@ class CheckInTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"You're checked in!", response.data)
         self.worksheet.update_value.assert_called_once_with('D2', True)
+
+    def test_phone_with_spaces_returns_format_error(self):
+        response = self.client.post('/info', data={'phone': '555 123 4567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b'Enter exactly 10 digits without spaces, dashes, or parentheses.',
+            response.data,
+        )
+        self.worksheet.__iter__.assert_not_called()
+        self.worksheet.update_value.assert_not_called()
 
     def test_unknown_phone_returns_to_check_in_form_with_error(self):
         self.worksheet.__iter__.return_value = iter([self.check_in_row()])

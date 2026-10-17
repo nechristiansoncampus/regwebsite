@@ -456,11 +456,17 @@ def info():
     wks = sh.worksheet_by_title('Registrations')
 
     if request.method == 'POST':
+        form_pn = request.form.get('phone', '')
+        if not re.fullmatch(r'\d{10}', form_pn):
+            return render_template(
+                'check_in.html',
+                error='Enter exactly 10 digits without spaces, dashes, or parentheses.',
+            )
+
         i = 0
         for row in wks:
             i += 1
             sheet_pn = re.sub(r"\D", "", row[CHECK_IN_PHONE_INDEX])
-            form_pn = request.form['phone']
             if sheet_pn == form_pn:
                 name = row[CHECK_IN_FULL_NAME_INDEX]
                 if row[CHECK_IN_PAYMENT_STATUS_INDEX].strip() == '':
