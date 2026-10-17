@@ -255,6 +255,28 @@ body {
     margin-bottom: 5px;
 }
 
+.not-paid-page .trim {
+    margin-bottom: 8px;
+}
+
+.not-paid-page .trim img {
+    width: 100%;
+    height: auto;
+    mix-blend-mode: multiply;
+}
+
+.not-paid-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+}
+
+.not-paid-actions .btn {
+    min-height: 48px;
+    padding: 11px 22px;
+    border-radius: 10px;
+}
+
 .info-heading {
     margin-top: 32px;
 }
