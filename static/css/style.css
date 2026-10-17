@@ -254,3 +254,70 @@ body {
 .announcement {
     margin-bottom: 5px;
 }
+
+.info-heading {
+    margin-top: 32px;
+}
+
+.info-heading h1 {
+    margin-bottom: 6px;
+}
+
+.attendee-name {
+    margin: 0 0 18px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.assignment-details {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+    line-height: 1.45;
+}
+
+.camp-map-link {
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.info-actions {
+    display: flex;
+}
+
+.info-actions .btn {
+    min-height: 48px;
+    padding: 11px 22px;
+    border-radius: 10px;
+}
+
+.info-surface .footer {
+    position: static;
+    display: block;
+    width: auto;
+    margin: 22px 0 0;
+    color: rgba(36, 22, 11, .55);
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    transform: none;
+}
+
+@media (max-width: 575px) {
+    .info-page .vertical-center {
+        min-height: auto;
+        padding: 20px 0;
+    }
+
+    .info-heading {
+        margin-top: 28px;
+    }
+
+    .info-actions .btn {
+        width: 100%;
+    }
+
+    .info-surface .footer {
+        text-align: center;
+    }
+}
