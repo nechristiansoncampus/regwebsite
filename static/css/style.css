@@ -15,18 +15,19 @@ body {
 }
 
 .vertical-center {
-    /* min-height: 100%;
-    min-height: 80vh; */
+    min-height: calc(100svh - 70px);
     display: flex;
     align-items: center;
     margin: 35px 0;
 }
 
 .check-in-surface {
-    padding: 22px;
+    flex: 0 0 auto;
+    width: min(600px, calc(100% - 32px));
+    padding: 42px 48px 44px;
     border: 1px solid rgba(92, 45, 11, .16);
-    border-radius: 18px;
-    background: rgba(255, 253, 248, .86);
+    border-radius: 20px;
+    background: rgba(255, 253, 248, .94);
     box-shadow: 0 24px 70px rgba(92, 45, 11, .16);
     backdrop-filter: blur(14px);
 }
@@ -38,17 +39,51 @@ body {
 }
 
 .check-in-surface h1 {
+    margin: 0;
+    font-size: 36px;
     font-weight: 800;
+    line-height: 1.15;
+}
+
+.check-in-intro {
+    margin: 38px 0 32px;
+}
+
+.check-in-intro p {
+    margin: 8px 0 0;
+    color: rgba(36, 22, 11, .58);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.check-in-form {
+    display: grid;
+    gap: 22px;
+}
+
+.check-in-field {
+    display: grid;
+    gap: 8px;
 }
 
 .check-in-surface .form-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
     color: #24160b;
     font-weight: 700;
 }
 
+.check-in-surface .form-label span {
+    color: rgba(36, 22, 11, .42);
+    font-size: 12px;
+    font-weight: 500;
+}
+
 .check-in-surface .form-control {
-    min-height: 48px;
-    padding: 12px 13px;
+    min-height: 54px;
+    padding: 14px 15px;
     border: 1px solid rgba(92, 45, 11, .16);
     border-radius: 12px;
     background: rgba(255, 255, 255, .78);
@@ -70,10 +105,22 @@ body {
 }
 
 .check-in-surface .form-text {
+    margin: 0;
     color: rgba(36, 22, 11, .55);
+    font-size: 12px;
+}
+
+.check-in-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
 }
 
 .check-in-surface .btn-primary {
+    min-width: 150px;
+    min-height: 50px;
+    padding: 12px 24px;
+    border-radius: 10px;
     border-color: rgba(180, 83, 9, .38);
     background-color: #e9aa68;
     background-image: linear-gradient(100deg, rgba(245, 190, 112, .88), rgba(239, 166, 107, .82), rgba(190, 190, 126, .72));
@@ -95,11 +142,11 @@ body {
 }
 
 .retreat-wordmark {
-    width: 110%;
-    margin: 0 -5% 16px;
-    padding: 2px 8%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
     color: #16110d;
-    font-size: clamp(24px, 4.4vw, 43px);
+    font-size: clamp(25px, 3.2vw, 32px);
     letter-spacing: 0;
     line-height: .98;
     text-align: center;
@@ -133,17 +180,31 @@ body {
 
 @media (max-width: 575px) {
     .vertical-center {
-        margin: 20px 0;
+        min-height: 100svh;
+        margin: 0;
+        padding: 16px 0;
     }
 
     .check-in-surface {
         margin-inline: 12px;
-        padding: 18px;
+        padding: 28px 22px 24px;
         border-radius: 16px;
     }
 
     .retreat-wordmark {
-        font-size: clamp(24px, 8.5vw, 36px);
+        font-size: clamp(24px, 8vw, 30px);
+    }
+
+    .check-in-intro {
+        margin: 30px 0 26px;
+    }
+
+    .check-in-surface h1 {
+        font-size: 32px;
+    }
+
+    .check-in-actions .btn {
+        width: 100%;
     }
 }
 

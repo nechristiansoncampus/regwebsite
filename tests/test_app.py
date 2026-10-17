@@ -583,7 +583,7 @@ class CheckInTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Phone number not registered', response.data)
-        self.assertIn(b'Enter your phone number:', response.data)
+        self.assertIn(b'<label for="phone" class="form-label">Phone number</label>', response.data)
         self.worksheet.update_value.assert_not_called()
 
 
