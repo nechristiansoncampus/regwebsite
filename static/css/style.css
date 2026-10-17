@@ -257,10 +257,11 @@ body {
 
 .not-paid-page .trim {
     margin-bottom: 8px;
+    text-align: center;
 }
 
 .not-paid-page .trim img {
-    width: 100%;
+    width: min(100%, 360px);
     height: auto;
     mix-blend-mode: multiply;
 }
