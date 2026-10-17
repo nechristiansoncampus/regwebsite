@@ -350,11 +350,6 @@ body {
 }
 
 @media (max-width: 575px) {
-    .info-page .vertical-center {
-        min-height: auto;
-        padding: 20px 0;
-    }
-
     .info-heading {
         margin-top: 28px;
     }
