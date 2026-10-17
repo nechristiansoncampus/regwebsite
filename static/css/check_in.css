@@ -1,19 +1,19 @@
 :root{--ink:#24160b;--muted:rgba(36,22,11,.66);--line:rgba(92,45,11,.17);--accent:#b45309;--surface:rgba(255,253,248,.92);--shadow:0 22px 60px rgba(92,45,11,.14)}
 *{box-sizing:border-box}
 body.checkin-page{min-height:100svh;margin:0;display:grid;place-items:center;padding:24px;color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(145deg,#fff7ed 0%,#fef3c7 52%,#ecfdf5 100%)}
-.checkin-panel{width:min(560px,100%);padding:30px;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow)}
-.retreat-name{margin:0 0 8px;color:var(--accent);font-size:13px;font-weight:800;letter-spacing:.12em;line-height:1.35;text-align:center;text-transform:uppercase}
-.retreat-theme{max-width:430px;margin:0 auto 28px;color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:clamp(27px,8vw,40px);font-weight:700;letter-spacing:0;line-height:1.08;text-align:center}
-.checkin-heading{margin:0 0 8px;font-size:clamp(30px,8vw,42px);font-weight:800;letter-spacing:0;line-height:1.08}
-.checkin-intro{margin:0 0 24px;color:var(--muted);font-size:17px;line-height:1.55}
-.checkin-form{display:grid;gap:20px}
+.checkin-panel{width:min(520px,100%);padding:28px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
+.retreat-name{margin:0 0 6px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;line-height:1.35;text-transform:uppercase}
+.retreat-theme{max-width:420px;margin:0 0 22px;padding-bottom:20px;border-bottom:1px solid var(--line);color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:26px;font-weight:700;letter-spacing:0;line-height:1.16}
+.checkin-heading{margin:0 0 6px;font-size:36px;font-weight:800;letter-spacing:0;line-height:1.08}
+.checkin-intro{margin:0 0 22px;color:var(--muted);font-size:16px;line-height:1.5}
+.checkin-form{display:grid;gap:16px}
 .checkin-field{display:grid;gap:8px}
 .checkin-field label{margin:0;color:var(--ink);font-size:16px;font-weight:700}
-.checkin-field .form-control{width:100%;min-height:54px;padding:12px 14px;border:1px solid rgba(92,45,11,.22);border-radius:12px;background:#fff;color:var(--ink);font-size:16px;font-weight:400;box-shadow:none}
+.checkin-field .form-control{width:100%;min-height:50px;padding:11px 14px;border:1px solid rgba(92,45,11,.22);border-radius:10px;background:#fff;color:var(--ink);font-size:16px;font-weight:400;box-shadow:none}
 .checkin-field .form-control:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(180,83,9,.12)}
 .checkin-field .form-control::placeholder{color:rgba(36,22,11,.34);font-weight:400}
 .checkin-hint{color:var(--muted);font-size:13px;line-height:1.4}
-.checkin-button,.checkin-link{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border:1px solid rgba(180,83,9,.28);border-radius:14px;background:linear-gradient(90deg,rgba(180,83,9,.18),rgba(245,158,11,.2),rgba(47,111,68,.13));color:var(--ink);font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 14px 34px rgba(180,83,9,.13)}
+.checkin-button,.checkin-link{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border:1px solid rgba(180,83,9,.3);border-radius:12px;background:#f8e8d7;color:var(--ink);font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 10px 24px rgba(180,83,9,.1)}
 .checkin-button{width:100%}
 .checkin-button:hover,.checkin-button:focus,.checkin-link:hover,.checkin-link:focus{border-color:rgba(180,83,9,.44);color:var(--ink);transform:translateY(-1px)}
 .checkin-alert{margin:0 0 22px;padding:14px 44px 14px 16px;border:1px solid rgba(185,28,28,.2);border-radius:12px;background:#fff1f2;color:#8f1d1d}
@@ -27,4 +27,4 @@ body.checkin-page{min-height:100svh;margin:0;display:grid;place-items:center;pad
 .checkin-link.secondary{background:rgba(255,255,255,.64);box-shadow:none}
 .checkin-note{margin:22px 0 0;color:var(--muted);font-size:13px;line-height:1.45;text-align:center}
 .notice-text{margin:18px 0 0;color:var(--muted);font-size:18px;line-height:1.6}
-@media(max-width:520px){body.checkin-page{padding:14px}.checkin-panel{padding:24px 20px}.retreat-theme{margin-bottom:24px}.assignment-row{align-items:flex-start}.checkin-actions{display:grid}.checkin-link{width:100%}}
+@media(max-width:520px){body.checkin-page{display:block;padding:16px}.checkin-panel{margin:0 auto;padding:22px 20px;border-radius:14px}.retreat-theme{margin-bottom:20px;padding-bottom:18px;font-size:22px;line-height:1.2}.checkin-heading{font-size:32px}.checkin-intro{margin-bottom:20px}.assignment-row{align-items:flex-start}.checkin-actions{display:grid}.checkin-link{width:100%}}
