@@ -1,16 +1,330 @@
+.check-in-surface,
+.check-in-surface * {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100svh;
+    margin: 0;
+    color: #24160b;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+        radial-gradient(900px 560px at 15% 0%, rgba(245, 158, 11, .28), transparent 62%),
+        radial-gradient(760px 480px at 95% 95%, rgba(21, 128, 61, .15), transparent 62%),
+        linear-gradient(180deg, #fff7ed, #fef3c7 52%, #ecfdf5);
+}
+
 .vertical-center {
-    /* min-height: 100%;
-    min-height: 80vh; */
+    min-height: calc(100svh - 70px);
     display: flex;
     align-items: center;
     margin: 35px 0;
 }
 
-#banner {
-    width: 110%;
-    padding-bottom: 10px;
+.check-in-surface {
+    flex: 0 0 auto;
+    width: min(600px, calc(100% - 32px));
+    padding: 42px 48px 44px;
+    border: 1px solid rgba(92, 45, 11, .16);
+    border-radius: 20px;
+    background: rgba(255, 253, 248, .94);
+    box-shadow: 0 24px 70px rgba(92, 45, 11, .16);
+    backdrop-filter: blur(14px);
+}
+
+.check-in-surface h1,
+.check-in-surface h4 {
+    color: #24160b;
+    letter-spacing: 0;
+}
+
+.check-in-surface h1 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.check-in-intro {
+    margin: 38px 0 32px;
+}
+
+.check-in-intro p {
+    margin: 8px 0 0;
+    color: rgba(36, 22, 11, .58);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.check-in-intro h1 {
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.check-in-form {
+    display: grid;
+    gap: 22px;
+}
+
+.check-in-field {
+    display: grid;
+    gap: 8px;
+}
+
+.phone-input-wrap {
+    position: relative;
+}
+
+.field-validation {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 10px);
+    left: 18px;
+    display: flex;
+    width: min(330px, calc(100% - 18px));
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid rgba(180, 83, 9, .28);
+    border-radius: 10px;
+    background: #fffaf3;
+    color: #4b2b17;
+    box-shadow: 0 14px 32px rgba(92, 45, 11, .18);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.field-validation[hidden] {
+    display: none;
+}
+
+.field-validation::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    left: 22px;
+    width: 13px;
+    height: 13px;
+    border-top: 1px solid rgba(180, 83, 9, .28);
+    border-left: 1px solid rgba(180, 83, 9, .28);
+    background: #fffaf3;
+    transform: rotate(45deg);
+}
+
+.field-validation-icon {
+    display: grid;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 6px;
+    background: #b45309;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.field-validation-message {
+    padding-top: 1px;
+}
+
+.check-in-surface .form-control.is-invalid {
+    border-color: rgba(180, 83, 9, .58);
+    background-image: none;
+    box-shadow: 0 0 0 3px rgba(180, 83, 9, .14);
+}
+
+.check-in-surface .form-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+    color: #24160b;
+    font-weight: 700;
+}
+
+.check-in-surface .form-label span {
+    color: rgba(36, 22, 11, .42);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.check-in-surface .form-control {
+    min-height: 54px;
+    padding: 14px 15px;
+    border: 1px solid rgba(92, 45, 11, .16);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .78);
+    color: #24160b;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 400;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .65) inset;
+}
+
+.check-in-surface .form-control:focus {
+    border-color: rgba(180, 83, 9, .48);
+    box-shadow: 0 0 0 3px rgba(180, 83, 9, .18);
+}
+
+.check-in-surface .form-control::placeholder {
+    color: rgba(36, 22, 11, .34);
+    font-weight: 400;
+}
+
+.check-in-surface .form-text {
+    margin: 0;
+    color: rgba(36, 22, 11, .55);
+    font-size: 12px;
+}
+
+.check-in-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.check-in-alert {
+    margin: 0 0 24px;
+    padding: 14px 44px 14px 16px;
+    border-color: rgba(153, 27, 27, .18);
+    border-radius: 10px;
+    background: rgba(254, 226, 226, .72);
+    color: #8f1d1d;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.check-in-alert .btn-close {
+    top: 50%;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-size: 10px;
+    opacity: .5;
+    transform: translateY(-50%);
+}
+
+.check-in-alert .btn-close:hover,
+.check-in-alert .btn-close:focus {
+    opacity: .78;
+}
+
+.check-in-surface .btn-primary {
+    min-width: 150px;
+    min-height: 50px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    border-color: rgba(180, 83, 9, .38);
+    background-color: #e9aa68;
+    background-image: linear-gradient(100deg, rgba(245, 190, 112, .88), rgba(239, 166, 107, .82), rgba(190, 190, 126, .72));
+    color: rgba(69, 30, 12, .94);
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(146, 64, 14, .18), 0 1px 0 rgba(255, 255, 255, .48) inset;
+}
+
+.check-in-surface .btn-primary:hover,
+.check-in-surface .btn-primary:focus {
+    border-color: rgba(180, 83, 9, .48);
+    background-color: #df9556;
+    background-image: linear-gradient(100deg, rgba(244, 179, 87, .94), rgba(232, 144, 84, .88), rgba(174, 181, 109, .78));
+    color: rgba(69, 30, 12, .94);
+}
+
+.check-in-surface a {
+    color: #9a4108;
+}
+
+.retreat-eyebrow {
+    margin: 0 0 12px;
+    color: #77716c;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0;
+    line-height: 1.4;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.retreat-wordmark {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: #16110d;
+    font-size: clamp(25px, 3.2vw, 32px);
+    letter-spacing: 0;
+    line-height: .98;
+    text-align: center;
+}
+
+.retreat-wordmark span {
     display: block;
-    margin: auto;
+    white-space: nowrap;
+}
+
+.retreat-wordmark-strong {
+    font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-weight: 700;
+}
+
+.retreat-wordmark-first {
+    font-size: 1em;
+    font-weight: 800;
+    background: linear-gradient(90deg, #252321, #514d49);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.retreat-wordmark-light {
+    margin: .15em 0;
+    font-family: "Garet", "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
+    font-size: .814em;
+    font-weight: 400;
+}
+
+.retreat-wordmark-third {
+    font-size: .837em;
+    background: linear-gradient(90deg, #45413e, #716b66);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+@media (max-width: 575px) {
+    .vertical-center {
+        min-height: 100svh;
+        margin: 0;
+        padding: 16px 0;
+    }
+
+    .check-in-surface {
+        margin-inline: 12px;
+        padding: 28px 22px 24px;
+        border-radius: 16px;
+    }
+
+    .retreat-wordmark {
+        font-size: clamp(24px, 8vw, 30px);
+    }
+
+    .check-in-intro {
+        margin: 30px 0 26px;
+    }
+
+    .check-in-surface h1 {
+        font-size: 32px;
+    }
+
+    .check-in-intro h1 {
+        font-size: 28px;
+    }
+
+    .check-in-actions .btn {
+        width: 100%;
+    }
 }
 
 .footer {
@@ -30,4 +344,112 @@
 
 .announcement {
     margin-bottom: 5px;
+}
+
+.payment-status-mark {
+    position: relative;
+    display: grid;
+    width: 88px;
+    height: 88px;
+    margin: 4px auto 22px;
+    place-items: center;
+    border: 2px solid rgba(180, 83, 9, .28);
+    border-radius: 50%;
+    background: rgba(254, 243, 199, .72);
+    color: #85501e;
+    font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.payment-status-mark::after {
+    content: "";
+    position: absolute;
+    width: 64px;
+    height: 4px;
+    border-radius: 999px;
+    background: #a65d2c;
+    transform: rotate(-42deg);
+}
+
+.not-paid-copy {
+    display: grid;
+    gap: 8px;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+.not-paid-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+}
+
+.not-paid-actions .btn {
+    min-height: 48px;
+    padding: 11px 22px;
+    border-radius: 10px;
+}
+
+.info-heading {
+    margin-top: 32px;
+}
+
+.info-heading h1 {
+    margin-bottom: 6px;
+}
+
+.attendee-name {
+    margin: 0 0 18px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.assignment-details {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+    line-height: 1.45;
+}
+
+.camp-map-link {
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.info-actions {
+    display: flex;
+}
+
+.info-actions .btn {
+    min-height: 48px;
+    padding: 11px 22px;
+    border-radius: 10px;
+}
+
+.info-surface .footer {
+    position: static;
+    display: block;
+    width: auto;
+    margin: 22px 0 0;
+    color: rgba(36, 22, 11, .55);
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    transform: none;
+}
+
+@media (max-width: 575px) {
+    .info-heading {
+        margin-top: 28px;
+    }
+
+    .info-actions .btn {
+        width: 100%;
+    }
+
+    .info-surface .footer {
+        text-align: center;
+    }
 }

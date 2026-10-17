@@ -1,7 +1,7 @@
 import os
 import unittest
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import email_service
 import google_sheets
@@ -510,6 +510,131 @@ class RouteTests(unittest.TestCase):
     def test_checkout_requires_registration_session(self):
         response = self.client.get('/checkout')
         self.assertIn(b'Please register before checking out.', response.data)
+
+
+class CheckInTests(unittest.TestCase):
+    def setUp(self):
+        home.app.config.update(TESTING=True, SECRET_KEY='test-secret')
+        self.client = home.app.test_client()
+        self.worksheet = MagicMock()
+        self.spreadsheet = Mock()
+        self.spreadsheet.worksheet_by_title.return_value = self.worksheet
+        self.sheets_client = Mock()
+        self.sheets_client.open.return_value = self.spreadsheet
+        self.authorize_patcher = patch.object(
+            home.pygsheets,
+            'authorize',
+            return_value=self.sheets_client,
+        )
+        self.authorize = self.authorize_patcher.start()
+
+    def tearDown(self):
+        self.authorize_patcher.stop()
+
+    def test_check_in_page_uses_text_wordmark_and_preserves_phone_validation(self):
+        html = self.client.get('/check-in').get_data(as_text=True)
+
+        self.assertIn('<title>Fall Retreat 2026 | Check In</title>', html)
+        self.assertIn('class="retreat-wordmark"', html)
+        self.assertIn("But Daniel:", html)
+        self.assertIn("A Heart Set for", html)
+        self.assertIn("God's Purpose", html)
+        self.assertNotIn('img/banner.png', html)
+        phone_input = html.split('<input type="tel"', 1)[1].split('>', 1)[0]
+        self.assertIn('inputmode="numeric"', phone_input)
+        self.assertIn('pattern="[0-9]{10}"', phone_input)
+        self.assertIn('aria-describedby="phoneFormat phoneError"', phone_input)
+        self.assertIn('required', phone_input)
+        self.assertIn('<form class="check-in-form" action="/info" method="post" novalidate>', html)
+        self.assertIn('class="field-validation"', html)
+        self.assertIn("checkInForm.addEventListener('submit'", html)
+
+    @staticmethod
+    def check_in_row(payment_status='Paid'):
+        row = [''] * 26
+        row[6] = 'Jamie Student'
+        row[7] = '(555) 123-4567'
+        row[9] = 'Cabin 4'
+        row[10] = 'Group B'
+        row[25] = payment_status
+        return row
+
+    def test_paid_attendee_is_checked_in_with_assignments(self):
+        self.worksheet.__iter__.return_value = iter([self.check_in_row()])
+
+        response = self.client.post('/info', data={'phone': '5551234567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"You're checked in!", response.data)
+        self.assertIn(b"<title>You're Checked In | Fall Retreat 2026</title>", response.data)
+        self.assertIn(b'Jamie Student', response.data)
+        self.assertIn(b'Cabin 4', response.data)
+        self.assertIn(b'Group B', response.data)
+        self.assertIn(b'Map of camp', response.data)
+        self.assertIn(b'Back to Home', response.data)
+        self.sheets_client.open.assert_called_once_with(
+            '2026 Fall Retreat - Registration (Responses)'
+        )
+        self.spreadsheet.worksheet_by_title.assert_called_once_with('Registrations')
+        self.worksheet.update_value.assert_called_once_with('D1', True)
+
+    def test_unpaid_attendee_is_not_checked_in(self):
+        self.worksheet.__iter__.return_value = iter([self.check_in_row('')])
+
+        response = self.client.post('/info', data={'phone': '5551234567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'<title>Payment Needed | Fall Retreat 2026</title>', response.data)
+        self.assertIn(b'Our records indicate that you have not paid yet.', response.data)
+        self.assertIn(b'Jamie Student', response.data)
+        self.assertIn(b'class="payment-status-mark"', response.data)
+        self.assertNotIn(b'shutterstock', response.data.lower())
+        self.assertIn(b'Back to home', response.data)
+        self.worksheet.update_value.assert_not_called()
+
+    def test_whitespace_payment_status_is_unpaid(self):
+        self.worksheet.__iter__.return_value = iter([self.check_in_row('   ')])
+
+        response = self.client.post('/info', data={'phone': '5551234567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Payment Needed | Fall Retreat 2026', response.data)
+        self.worksheet.update_value.assert_not_called()
+
+    def test_matching_later_row_updates_that_row(self):
+        other_attendee = self.check_in_row()
+        other_attendee[7] = '5550000000'
+        self.worksheet.__iter__.return_value = iter([
+            other_attendee,
+            self.check_in_row(),
+        ])
+
+        response = self.client.post('/info', data={'phone': '5551234567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"You're checked in!", response.data)
+        self.worksheet.update_value.assert_called_once_with('D2', True)
+
+    def test_phone_with_spaces_returns_format_error(self):
+        response = self.client.post('/info', data={'phone': '555 123 4567'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            b'Enter exactly 10 digits without spaces, dashes, or parentheses.',
+            response.data,
+        )
+        self.worksheet.__iter__.assert_not_called()
+        self.worksheet.update_value.assert_not_called()
+
+    def test_unknown_phone_returns_to_check_in_form_with_error(self):
+        self.worksheet.__iter__.return_value = iter([self.check_in_row()])
+
+        response = self.client.post('/info', data={'phone': '5550000000'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Phone number not registered', response.data)
+        self.assertIn(b'<label for="phone" class="form-label">Phone number</label>', response.data)
+        self.worksheet.update_value.assert_not_called()
 
 
 class RegistrationRuleTests(unittest.TestCase):
