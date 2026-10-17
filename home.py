@@ -42,6 +42,12 @@ PAYPAL_CLIENT_EVENTS = frozenset({
     'sdk_load_failed',
     'sdk_unavailable',
 })
+CHECK_IN_COLUMN = 'D'
+CHECK_IN_FULL_NAME_INDEX = 6
+CHECK_IN_PHONE_INDEX = 7
+CHECK_IN_HOUSING_INDEX = 9
+CHECK_IN_GROUP_INDEX = 10
+CHECK_IN_PAYMENT_STATUS_INDEX = 25
 
 
 def required_setting(name):
@@ -453,17 +459,22 @@ def info():
         i = 0
         for row in wks:
             i += 1
-            sheet_pn = re.sub(r"\D", "", row[11]) #removes anything that's not a number
+            sheet_pn = re.sub(r"\D", "", row[CHECK_IN_PHONE_INDEX])
             form_pn = request.form['phone']
-            print(sheet_pn, form_pn)
             if sheet_pn == form_pn:
-                if (row[6].strip() == ''):
-                    return render_template('not_paid.html', name=row[3] + ' ' + row[4])
+                name = row[CHECK_IN_FULL_NAME_INDEX]
+                if row[CHECK_IN_PAYMENT_STATUS_INDEX].strip() == '':
+                    return render_template('not_paid.html', name=name)
                 else:
-                    wks.update_value('B' + str(i), True)
-                    return render_template('info.html', name=row[3] + ' ' + row[4], group=row[13], housing=row[14])
+                    wks.update_value(CHECK_IN_COLUMN + str(i), True)
+                    return render_template(
+                        'info.html',
+                        name=name,
+                        group=row[CHECK_IN_GROUP_INDEX],
+                        housing=row[CHECK_IN_HOUSING_INDEX],
+                    )
                 break
-    return render_template('home.html', error="Phone number not registered")
+    return render_template('check_in.html', error="Phone number not registered")
 
 @app.route("/check-in", methods=['get'])
 def check_in():
