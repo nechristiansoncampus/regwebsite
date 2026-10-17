@@ -56,6 +56,11 @@ body {
     line-height: 1.5;
 }
 
+.check-in-intro h1 {
+    font-size: 30px;
+    font-weight: 600;
+}
+
 .check-in-form {
     display: grid;
     gap: 22px;
@@ -201,6 +206,10 @@ body {
 
     .check-in-surface h1 {
         font-size: 32px;
+    }
+
+    .check-in-intro h1 {
+        font-size: 28px;
     }
 
     .check-in-actions .btn {
