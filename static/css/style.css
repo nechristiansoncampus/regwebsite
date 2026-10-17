@@ -256,6 +256,7 @@ body {
 }
 
 .payment-status-mark {
+    position: relative;
     display: grid;
     width: 88px;
     height: 88px;
@@ -269,6 +270,16 @@ body {
     font-size: 42px;
     font-weight: 700;
     line-height: 1;
+}
+
+.payment-status-mark::after {
+    content: "";
+    position: absolute;
+    width: 64px;
+    height: 4px;
+    border-radius: 999px;
+    background: #a65d2c;
+    transform: rotate(-42deg);
 }
 
 .not-paid-copy {
